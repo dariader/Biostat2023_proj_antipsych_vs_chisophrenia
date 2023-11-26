@@ -117,7 +117,9 @@ server <- function(input, output) {
   })
 
   output$corr <- renderPlotly({
-    cor_matrix <- cor(data_filtered[, numeric_columns])
+    data_num <- data_filtered[,c(numeric_columns,factor_columns)]
+    data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
+    cor_matrix <- cor(data_num)
 
     # Create a correlation plot using plot_ly
       plot <- plot_ly(
