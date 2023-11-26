@@ -3,12 +3,17 @@ library(ggplot2)
 library(writexl)
 library(openxlsx)
 library(shiny)
+library(FactoMineR)
+library(ggfortify)
+library(plotly)
 
 
-data_filtered <- readxl::read_xlsx('../../scripts/_misc/Data_SAS_fixed.xlsx')
+source('scripts/0_preprocessing/preprocessing.R')
+
+data_filtered <- preprocessing('data/Data_SAS.xlsx','scripts/_misc/Data_SAS_fixed.xlsx')
 
 # Переводим числовые столбцы в числовой формат
-numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
+numeric_columns <- c("age", "disease duration","antipsychotic dose", "THF dose", "gait", "arm dropping",
                      "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
                      "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
                      "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
@@ -25,7 +30,7 @@ data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], functio
 })
 
 # Переводим категориальные столбцы в факторы
-factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose", 
+factor_columns <- c("gender", "visit", "antipsychotic",
                     "course", "education", "smoke", "antipsychotic generation")
 
 data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
@@ -47,7 +52,14 @@ ui <- fluidPage(
              selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
              checkboxInput("split_by_visit_num", "Разбить по 'visit'", value = FALSE),
              plotOutput("num_histogram")
-    )
+    ),
+    tabPanel("PCA",
+             selectInput("pca_variable", "Выберите переменную для группировки", choices = categorical_variables),
+             checkboxInput("split_by_visit_pca", "Разбить по 'visit'", value = TRUE),
+             plotOutput("pca")
+    ),
+    tabPanel("Correlation",
+             plotlyOutput("corr"))
   )
 )
 
@@ -85,6 +97,52 @@ server <- function(input, output) {
     
     print(gg)
   })
+  #corrplot(corr_matrix)
+  #fviz_eig(data.pca, addlabels = TRUE)
+  #fviz_cos2(data.pca, choice = "var", axes = 1:2)
+
+  output$pca <- renderPlot({
+    variable <- input$pca_variable
+    split_by_visit_num <- input$split_by_visit_pca
+    data_num <- data_filtered[,c(numeric_columns,factor_columns)]
+    data_num <- data_num[complete.cases(data_num),]
+    data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
+
+    data.pca <- princomp(cor(data_num))
+    # if (split_by_visit_num) {
+    #   gg <- gg + facet_wrap(~visit)
+    # }
+
+    #print(gg)
+  })
+
+  output$corr <- renderPlotly({
+    cor_matrix <- cor(data_filtered[, numeric_columns])
+
+    # Create a correlation plot using plot_ly
+      plot <- plot_ly(
+      x = colnames(cor_matrix),
+      y = colnames(cor_matrix),
+      z = cor_matrix,
+      type = "heatmap",
+      colorscale = "Vulcano",
+      colorbar = list(title = "Correlation")
+    )
+
+    # Customize layout
+    layout <- list(
+      title = "Correlation Plot",
+      xaxis = list(title = ""),
+      yaxis = list(title = "")
+    )
+
+    # Combine plot and layout
+    cor_plot <- layout(plot, layout)
+
+    # Show the plot
+    cor_plot
+  })
+
 }
 
 # Запуск приложения Shiny

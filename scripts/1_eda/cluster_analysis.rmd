@@ -34,8 +34,6 @@ corrplot(corr_matrix)
 data.pca <- princomp(corr_matrix)
 fviz_eig(data.pca, addlabels = TRUE)
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
-fviz_pca_ind(data.pca,
-                label="none")
 ```
 ```{r}
 numerical_data <- data[2:ncol(data)][data$visit==1,][,-11]
@@ -44,8 +42,6 @@ corrplot(corr_matrix)
 data.pca <- princomp(corr_matrix)
 fviz_eig(data.pca, addlabels = TRUE)
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
-fviz_pca_ind(data.pca,
-                label="none")
 ```
 ```{r}
 
@@ -55,8 +51,6 @@ corrplot(corr_matrix)
 data.pca <- princomp(corr_matrix)
 fviz_eig(data.pca, addlabels = TRUE)
 fviz_cos2(data.pca, choice = "var", axes = 1:2)
-fviz_pca_ind(data.pca,
-                label="none")
 ```
 ```{r}
 
