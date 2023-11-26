@@ -4,8 +4,8 @@ library(ggplot2)
 library(writexl)
 library(openxlsx)
 
-preprocessing <- function(df) {
-  data <- readxl::read_xlsx(df, sheet = 2)
+preprocessing <- function(filename, output='../scripts/0_preprocessing/preprocessing.R') {
+  data <- readxl::read_xlsx(filename, sheet = 2)
   # Переводим числовые столбцы в числовой формат
   numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
                        "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
@@ -23,5 +23,6 @@ preprocessing <- function(df) {
     as.numeric(gsub(",", ".", x))
   })
   # запись в файл
-  write.xlsx(data, file = "../../scripts/_misc/Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
+  write.xlsx(data, file = output, sheetName="data", append=TRUE)
+  return(data)
 }
