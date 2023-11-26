@@ -1,0 +1,184 @@
+---
+title: "EDA"
+author: "Glebus Alexandr"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(writexl)
+library(openxlsx)
+```
+
+## EDA
+```{r}
+data <- readxl::read_xlsx('Data_SAS.xlsx', sheet = 2)
+data %>% glimpse()
+data %>% summary()
+```
+
+
+## Приводим данные к нужному виду
+
+```{r}
+# Копируем исходный датафрейм
+data_filtered <- data
+
+# Переводим числовые столбцы в числовой формат
+numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
+                          "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
+                          "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
+                          "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
+                          "N1", "N2", "N3", "N4", "N5", "N6", "N7", "Negative scale",
+                          "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
+                          "G11", "G12", "G13", "G14", "G15", "G16", "General Psychopathology scale",
+                          "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
+                          "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
+                          "Tower of London", "ZToL", "Comp Z")
+
+# все десятичные разделители делаем точками
+data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], function(x) {
+  as.numeric(gsub(",", ".", x))
+})
+
+# Переводим категориальные столбцы в факторы
+factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose", 
+                    "course", "education", "smoke", "antipsychotic generation")
+
+data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
+
+
+data_filtered %>% glimpse
+```
+
+## Проверка шкал
+
+Проверим, правильно ли посчитали SAS
+
+```{r}
+data_filtered %>%
+  mutate(total_score_SAS_auto = rowSums(select(., gait:akathisia))) %>% 
+  filter(`Total score SAS` != total_score_SAS_auto)%>% 
+  select(id, `Total score SAS`, total_score_SAS_auto) 
+```
+Выявлены ошибки в двух строках.
+
+Проверим, правильно ли посчитали PANSS
+```{r}
+# Создаем колонки
+data_compare <- data_filtered %>%
+  mutate(
+    Positive_scale_auto = rowSums(select(., P1:P7)),
+    Negative_scale_auto = rowSums(select(., N1:N7)),
+    General_Psychopathology_scale_auto = rowSums(select(., G1:G16)),
+    Total_score_PANSS_auto = Positive_scale_auto + Negative_scale_auto + General_Psychopathology_scale_auto
+  )
+
+# Сравниваем и выводим результат
+differences_pos_scale <- data_compare %>%
+  filter(`Positive scale` != Positive_scale_auto)
+
+differences_neg_scale <- data_compare %>%
+  filter(`Negative scale` != Negative_scale_auto)
+
+differences_gen_psychopathology <- data_compare %>%
+  filter(`General Psychopathology scale` != General_Psychopathology_scale_auto)
+
+differences_total_panss <- data_compare %>%
+  filter(`Total score PANSS` != Total_score_PANSS_auto)
+
+# Выводим результаты
+cat("Различия в Positive scale:\n")
+print(differences_pos_scale[, c("id", "Positive scale", "Positive_scale_auto")])
+
+cat("\nРазличия в Negative scale:\n")
+print(differences_neg_scale[, c("id", "Negative scale", "Negative_scale_auto")])
+
+cat("\nРазличия в General Psychopathology scale:\n")
+print(differences_gen_psychopathology[, c("id", "General Psychopathology scale", "General_Psychopathology_scale_auto")])
+
+cat("\nРазличия в Total score PANSS:\n")
+print(differences_total_panss[, c("id", "Total score PANSS", "Total_score_PANSS_auto")])
+
+```
+
+
+Заменим данные, посчитанными автоматически.
+```{r}
+data_filtered <- data_filtered %>%
+  mutate(`Total score SAS` = rowSums(select(., gait:akathisia)),
+      `Positive scale` = rowSums(select(., P1:P7)),
+      `Negative scale` = rowSums(select(., N1:N7)),
+      `General Psychopathology scale` = rowSums(select(., G1:G16)),
+      `Total score PANSS` = `Positive scale` + `Negative scale` + `General Psychopathology scale`) 
+```
+
+
+```{r}
+write.xlsx(data_filtered, file = "Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
+```
+
+## Дальше пока что бред - лучше не смотреть)
+## Построение модели
+
+```{r}
+data <- readxl::read_xlsx('Data_SAS_fixed.xlsx')
+## Приводим данные к нужному виду
+
+# Копируем исходный датафрейм
+data_filtered <- data
+
+# Переводим числовые столбцы в числовой формат
+numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
+                          "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
+                          "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
+                          "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
+                          "N1", "N2", "N3", "N4", "N5", "N6", "N7", "Negative scale",
+                          "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
+                          "G11", "G12", "G13", "G14", "G15", "G16", "General Psychopathology scale",
+                          "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
+                          "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
+                          "Tower of London", "ZToL", "Comp Z")
+
+data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], function(x) {
+  as.numeric(gsub(",", ".", x))
+})
+
+# Переводим категориальные столбцы в факторы
+factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose", 
+                    "course", "education", "smoke", "antipsychotic generation")
+
+data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
+
+
+data_filtered %>% glimpse
+```
+
+
+```{r}
+# Выберем нужные колонки
+data_selected <- data_filtered %>% 
+  select(gender, age, `disease duration`, antipsychotic, `antipsychotic dose`, 
+         `antipsychotic generation`, `THF dose`, visit, `Total score SAS`,`Total score PANSS`, `Comp Z`
+        )
+```
+
+
+Построим логистическую регрессию. Функция step перебирает все возможные варианты.
+
+```{r}
+
+fit <- glm(`Total score SAS` ~ ., family = "gaussian", data = data_selected) %>% 
+  step()
+#fit <- lm(`Total score SAS` ~  .,  data = data_selected) %>% 
+#  step()
+```
+```{r}
+fit %>% summary()
+```
+
+
+
