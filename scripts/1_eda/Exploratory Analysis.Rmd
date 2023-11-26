@@ -108,6 +108,7 @@ print(differences_total_panss[, c("id", "Total score PANSS", "Total_score_PANSS_
 
 Заменим данные, посчитанными автоматически.
 ```{r}
+# Заменим данные, посчитанными автоматически
 data_filtered <- data_filtered %>%
   mutate(`Total score SAS` = rowSums(select(., gait:akathisia)),
       `Positive scale` = rowSums(select(., P1:P7)),
@@ -120,6 +121,15 @@ data_filtered <- data_filtered %>%
 ```{r}
 write.xlsx(data_filtered, file = "Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
 ```
+
+
+```{r}
+source("C:/Biostat2023_proj_antipsych_vs_chisophrenia/scripts/0_preprocessing/preprocessing.R")
+```
+```{r}
+preprocessing("../../data/Data_SAS.xlsx")
+```
+
 
 ## Дальше пока что бред - лучше не смотреть)
 ## Построение модели
