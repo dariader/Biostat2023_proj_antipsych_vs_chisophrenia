@@ -14,8 +14,9 @@ library(openxlsx)
 ```
 
 ## EDA
+
 ```{r}
-data <- readxl::read_xlsx('Data_SAS.xlsx', sheet = 2)
+data <- readxl::read_xlsx('../../data/Data_SAS.xlsx', sheet = 2)
 data %>% glimpse()
 data %>% summary()
 ```
@@ -90,6 +91,9 @@ differences_gen_psychopathology <- data_compare %>%
 differences_total_panss <- data_compare %>%
   filter(`Total score PANSS` != Total_score_PANSS_auto)
 
+```
+
+```{r echo=FALSE}
 # Выводим результаты
 cat("Различия в Positive scale:\n")
 print(differences_pos_scale[, c("id", "Positive scale", "Positive_scale_auto")])
@@ -102,9 +106,11 @@ print(differences_gen_psychopathology[, c("id", "General Psychopathology scale",
 
 cat("\nРазличия в Total score PANSS:\n")
 print(differences_total_panss[, c("id", "Total score PANSS", "Total_score_PANSS_auto")])
-
 ```
 
+Дальше должна быть проверка шкалы BACS.
+
+Выявлены ошибки в Total score SAS, Positive scale, Negative scale, General Psychopathology scale, Total score PANSS
 
 Заменим данные, посчитанными автоматически.
 ```{r}
@@ -118,16 +124,55 @@ data_filtered <- data_filtered %>%
 ```
 
 
-```{r}
-write.xlsx(data_filtered, file = "Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
-```
 
+Для замены данных правильными, создан скрипт preprocessing.R
 
 ```{r}
-source("C:/Biostat2023_proj_antipsych_vs_chisophrenia/scripts/0_preprocessing/preprocessing.R")
+# source("C:/Biostat2023_proj_antipsych_vs_chisophrenia/scripts/0_preprocessing/preprocessing.R")
+# preprocessing("../../data/Data_SAS.xlsx")
 ```
+
+## EDA - исправленные данные
+
 ```{r}
-preprocessing("../../data/Data_SAS.xlsx")
+data_filtered %>% 
+  glimpse()
+```
+
+```{r}
+data_filtered %>% 
+  summary()
+```
+
+Дальше идет куча графиков: сначала для категориальных переменных барплоты, а потом для количественных - гистограммы.
+
+Категориальные переменные:
+```{r echo=FALSE}
+categorical_variables <- data_filtered %>% select_if(is.factor) %>% names()
+
+# Проход по всем категориальным переменным и создание столбчатой диаграммы
+for (variable in categorical_variables) {
+  p <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
+    geom_bar() +
+    labs(title = paste("Столбчатая диаграмма для", variable)) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  print(p)
+}
+```
+Количественных переменные:
+```{r}
+# Нумерические переменные
+numeric_variables <- data_filtered %>% select_if(is.numeric) %>% names()
+# Графики для числовых переменных
+for (variable in numeric_variables) {
+  p <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
+    geom_histogram(fill = "skyblue", bins = 10) +
+    labs(title = paste("Гистограмма для", variable)) +
+    theme_minimal()
+  
+  print(p)
+}
 ```
 
 
@@ -135,7 +180,7 @@ preprocessing("../../data/Data_SAS.xlsx")
 ## Построение модели
 
 ```{r}
-data <- readxl::read_xlsx('Data_SAS_fixed.xlsx')
+data <- readxl::read_xlsx('../_misc/Data_SAS_fixed.xlsx')
 ## Приводим данные к нужному виду
 
 # Копируем исходный датафрейм

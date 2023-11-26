@@ -23,5 +23,5 @@ preprocessing <- function(df) {
     as.numeric(gsub(",", ".", x))
   })
   # запись в файл
-  write.xlsx(data_filtered, file = "../../scripts/_misc/Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
+  write.xlsx(data, file = "../../scripts/_misc/Data_SAS_fixed.xlsx", sheetName="data", append=TRUE)
 }
