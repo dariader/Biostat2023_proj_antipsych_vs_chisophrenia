@@ -3,7 +3,6 @@ title: "EDA"
 author: "Glebus Alexandr"
 date: "`r Sys.Date()`"
 output: html_document
-runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -13,11 +12,15 @@ library(ggplot2)
 library(writexl)
 library(openxlsx)
 library(shiny)
+# установление рабочей директории
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+#setwd(getSrcDirectory(function(x) {x}))
 ```
 
 ## EDA
 
 ```{r}
+
 data <- readxl::read_xlsx('../../data/Data_SAS.xlsx', sheet = 2)
 data %>% glimpse()
 data %>% summary()
@@ -80,7 +83,7 @@ data_compare <- data_filtered %>%
     Total_score_PANSS_auto = Positive_scale_auto + Negative_scale_auto + General_Psychopathology_scale_auto
   )
 
-# Сравниваем и выводим результат
+# Сравниваем
 differences_pos_scale <- data_compare %>%
   filter(`Positive scale` != Positive_scale_auto)
 
@@ -110,28 +113,136 @@ cat("\nРазличия в Total score PANSS:\n")
 print(differences_total_panss[, c("id", "Total score PANSS", "Total_score_PANSS_auto")])
 ```
 
-Дальше должна быть проверка шкалы BACS.
+Проверка шкалы BACS.
 
-Выявлены ошибки в Total score SAS, Positive scale, Negative scale, General Psychopathology scale, Total score PANSS
-
-Заменим данные, посчитанными автоматически.
 ```{r}
-# Заменим данные, посчитанными автоматически
-data_filtered <- data_filtered %>%
-  mutate(`Total score SAS` = rowSums(select(., gait:akathisia)),
-      `Positive scale` = rowSums(select(., P1:P7)),
-      `Negative scale` = rowSums(select(., N1:N7)),
-      `General Psychopathology scale` = rowSums(select(., G1:G16)),
-      `Total score PANSS` = `Positive scale` + `Negative scale` + `General Psychopathology scale`) 
+# Код для автоматического расчета Z-баллов. 
+
+data_compare <- data_filtered %>%
+  mutate(
+    ZVM_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Verbal Memory` - 49.55) / 7.1, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Verbal Memory` - 48.67) / 7.1, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Verbal Memory` - 44.44) / 5.47, 2),
+      gender == 'ж' & age < 30 ~ round((`Verbal Memory` - 50.52) / 7.94, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Verbal Memory` - 49.77) / 7.25, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Verbal Memory` - 47.00) / 6.35, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Verbal Memory` - 44.33) / 7.32, 2),
+      TRUE ~ NA_real_
+    ),
+    ZDS_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Digit Sequencing` - 21.8) / 2.57, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Digit Sequencing` - 22.14) / 3.35, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Digit Sequencing` - 20.07) / 3.33, 2),
+      gender == 'ж' & age < 30 ~ round((`Digit Sequencing` - 20.24) / 3.50, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Digit Sequencing` - 21.59) / 3.14, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Digit Sequencing` - 20.60) / 3.56, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Digit Sequencing` - 17.90) / 3.69, 2),
+      TRUE ~ NA_real_
+    ),
+    ZMT_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Token Motor Task` - 74.7) / 8.8, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Token Motor Task` - 71.43) / 12.15, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Token Motor Task` - 74.30) / 11.58, 2),
+      gender == 'ж' & age < 30 ~ round((`Token Motor Task` - 68.57) / 9.36, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Token Motor Task` - 72.18) / 8.86, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Token Motor Task` - 71.6) / 12.64, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Token Motor Task` - 68.86) / 11.65, 2),
+      TRUE ~ NA_real_
+    ),
+    ZVF_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Verbal Fluency` - 58.4) / 9.46, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Verbal Fluency` - 56.48) / 14.04, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Verbal Fluency` - 62.00) / 16.76, 2),
+      gender == 'ж' & age < 30 ~ round((`Verbal Fluency` - 54.8) / 14.53, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Verbal Fluency` - 60.45) / 11.05, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Verbal Fluency` - 58.2) / 10.7, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Verbal Fluency` - 58.29) / 10.79, 2),
+      TRUE ~ NA_real_
+    ),
+    ZSC_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Symbol Coding` - 61.95) / 8.06, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Symbol Coding` - 61.24) / 10.73, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Symbol Coding` - 54.35) / 6.61, 2),
+      gender == 'ж' & age < 30 ~ round((`Symbol Coding` - 65.71) / 6.09, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Symbol Coding` - 60.86) / 8.74, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Symbol Coding` - 57.4) / 7.55, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Symbol Coding` - 50.1) / 10.24, 2),
+      TRUE ~ NA_real_
+    ),
+    ZToL_auto = case_when(
+      gender == 'м' & age < 30 ~ round((`Tower of London` - 18.45) / 1.82, 2),
+      gender == 'м' & age > 29 & age < 40 ~ round((`Tower of London` - 19.1) / 1.67, 2),
+      gender == 'м' & age > 39 & age < 50 ~ round((`Tower of London` - 18.35) / 2.98, 2),
+      gender == 'ж' & age < 30 ~ round((`Tower of London` - 17.67) / 1.93, 2),
+      gender == 'ж' & age > 29 & age < 40 ~ round((`Tower of London` - 17.64) / 1.71, 2),
+      gender == 'ж' & age > 39 & age < 50 ~ round((`Tower of London` - 17.4) / 1.76, 2),
+      gender == 'ж' & age > 49 & age < 60 ~ round((`Tower of London` - 16.48) / 2.36, 2),
+      TRUE ~ NA_real_
+    )
+  )
+
+data_compare <- data_compare %>% mutate(
+  Comp_Z_auto = round(rowSums(select(., ZVM_auto:ZToL_auto))/ 3.96, 2))
+```
+
+```{r}
+# Сравниваем
+differences_ZVM <- data_compare %>%
+  filter(ZVM_auto != ZVM)
+
+differences_ZDS <- data_compare %>%
+  filter(ZDS_auto != ZDS)
+
+differences_ZMT <- data_compare %>%
+  filter(ZMT_auto != ZMT)
+
+differences_ZVF <- data_compare %>%
+  filter(ZVF_auto != ZVF)
+
+differences_ZSC <- data_compare %>%
+  filter(ZSC_auto != ZSC)
+
+differences_ZToL <- data_compare %>%
+  filter(ZToL_auto != ZToL)
+
+differences_Comp_Z <- data_compare %>%
+  filter(Comp_Z_auto != `Comp Z`)
+```
+
+```{r echo=FALSE}
+# Выводим результаты
+cat("Различия в ZVM:\n")
+print(differences_ZVM[, c("id", "ZVM", "ZVM_auto")])
+
+cat("\nРазличия в ZDS:\n")
+print(differences_ZDS[, c("id", "ZDS", "ZDS_auto")])
+
+cat("\nРазличия в ZMT:\n")
+print(differences_ZMT[, c("id", "ZMT", "ZMT_auto")])
+
+cat("\nРазличия в ZVF:\n")
+print(differences_ZVF[, c("id", "ZVF", "ZVF_auto")])
+
+cat("Различия в ZSC:\n")
+print(differences_ZSC[, c("id", "ZSC", "ZSC_auto")])
+
+cat("Различия в ZToL:\n")
+print(differences_ZToL[, c("id", "ZToL", "ZToL_auto")])
+
+cat("Различия в Comp Z:\n")
+print(differences_Comp_Z[, c("id", "Comp Z", "Comp_Z_auto")])
 ```
 
 
+Выявлены ошибки в Total score SAS, Positive scale, Negative scale, General Psychopathology scale, Total score PANSS.
+Так же выявлены ошибки во всех BACS.
 
-Для замены данных правильными, создан скрипт preprocessing.R
+Для замены данных правильными, создан скрипт preprocessing.R, который так же создает Data_SAS_fixed.xlsx в _misc
 
 ```{r}
-# source("C:/Biostat2023_proj_antipsych_vs_chisophrenia/scripts/0_preprocessing/preprocessing.R")
-# preprocessing("../../data/Data_SAS.xlsx")
+source("../../scripts/0_preprocessing/preprocessing.R")
+data_filtered <- preprocessing("../../data/Data_SAS.xlsx")
 ```
 
 ## EDA - исправленные данные
@@ -146,168 +257,13 @@ data_filtered %>%
   summary()
 ```
 
-Дальше идет куча графиков: сначала для категориальных переменных барплоты, а потом для количественных - гистограммы.
-
-Категориальные переменные:
-
-```{r }
-categorical_variables <- data_filtered %>% select_if(is.factor) %>% names()
-
-# Проход по всем категориальным переменным и создание столбчатой диаграммы
-for (variable in categorical_variables) {
-  p <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
-    geom_bar() +
-    labs(title = paste("Столбчатая диаграмма для", variable)) +
-    theme_minimal() +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  print(p)
-}
-```
-
-
-Количественных переменные:
-
-```{r}
-# Нумерические переменные
-numeric_variables <- data_filtered %>% select_if(is.numeric) %>% names()
-# Графики для числовых переменных
-for (variable in numeric_variables) {
-  p <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
-    geom_histogram(fill = "skyblue", bins = 10) +
-    labs(title = paste("Гистограмма для", variable)) +
-    theme_minimal()
-  
-  print(p)
-}
-```
-
-Добавил возможность запуск Shiny
+Eda с помощью Shiny
 
 ```{r eval=FALSE}
-
-# Категориальные переменные
-categorical_variables <- data_filtered %>% select_if(is.factor) %>% names()
-
-# Нумерические переменные
-numeric_variables <- data_filtered %>% select_if(is.numeric) %>% names()
-
-# UI для приложения Shiny
-ui <- fluidPage(
-  tabsetPanel(
-    tabPanel("Категориальные переменные",
-      selectInput("cat_variable", "Выберите категориальную переменную", choices = categorical_variables),
-      checkboxInput("split_by_visit", "Разбить по 'visit'", value = FALSE),
-      plotOutput("cat_barplot")
-    ),
-    tabPanel("Числовые переменные",
-      selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
-      checkboxInput("split_by_visit_num", "Разбить по 'visit'", value = FALSE),
-      plotOutput("num_histogram")
-    )
-  )
-)
-
-# Server для приложения Shiny
-server <- function(input, output) {
-  output$cat_barplot <- renderPlot({
-    variable <- input$cat_variable
-    split_by_visit <- input$split_by_visit
-    
-    gg <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
-      geom_bar() +
-      labs(title = paste("Столбчатая диаграмма для", variable)) +
-      theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45, hjust = 1))
-    
-    if (split_by_visit) {
-      gg <- gg + facet_wrap(~visit)
-    }
-    
-    print(gg)
-  })
-
-  output$num_histogram <- renderPlot({
-    variable <- input$num_variable
-    split_by_visit_num <- input$split_by_visit_num
-    
-    gg <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
-      geom_histogram(fill = "skyblue", bins = 10) +
-      labs(title = paste("Гистограмма для", variable)) +
-      theme_minimal()
-    
-    if (split_by_visit_num) {
-      gg <- gg + facet_wrap(~visit)
-    }
-    
-    print(gg)
-  })
-}
-
-# Запуск приложения Shiny
-shinyApp(ui, server)
-
+source("../../scripts/1_eda/eda_shiny_func.R")
+eda_shiny(data_filtered)
 ```
 
-
-
-## Дальше пока что бред - лучше не смотреть)
-## Построение модели
-
-```{r}
-data <- readxl::read_xlsx('../_misc/Data_SAS_fixed.xlsx')
-## Приводим данные к нужному виду
-
-# Копируем исходный датафрейм
-data_filtered <- data
-
-# Переводим числовые столбцы в числовой формат
-numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
-                          "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
-                          "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
-                          "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
-                          "N1", "N2", "N3", "N4", "N5", "N6", "N7", "Negative scale",
-                          "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
-                          "G11", "G12", "G13", "G14", "G15", "G16", "General Psychopathology scale",
-                          "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
-                          "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
-                          "Tower of London", "ZToL", "Comp Z")
-
-data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], function(x) {
-  as.numeric(gsub(",", ".", x))
-})
-
-# Переводим категориальные столбцы в факторы
-factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose", 
-                    "course", "education", "smoke", "antipsychotic generation")
-
-data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
-
-
-data_filtered %>% glimpse
-```
-
-
-```{r}
-# Выберем нужные колонки
-data_selected <- data_filtered %>% 
-  select(gender, age, `disease duration`, antipsychotic, `antipsychotic dose`, 
-         `antipsychotic generation`, `THF dose`, visit, `Total score SAS`,`Total score PANSS`, `Comp Z`
-        )
-```
-
-
-Построим логистическую регрессию. Функция step перебирает все возможные варианты.
-
-```{r}
-
-fit <- glm(`Total score SAS` ~ ., family = "gaussian", data = data_selected) %>% 
-  step()
-#fit <- lm(`Total score SAS` ~  .,  data = data_selected) %>% 
-#  step()
-```
-```{r}
-fit %>% summary()
-```
 
 
 

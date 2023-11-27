@@ -10,8 +10,8 @@ position the caret at any line or the code chunk, then click "+".
 
 The code chunk appears:
 ```{r}
-source('scripts/0_preprocessing/preprocessing.R')
-data<-preprocessing(filename='data/Data_SAS.xlsx', output='scripts/_misc/Data_SAS_fixed.xlsx')
+source('../0_preprocessing/preprocessing.R')
+data<-preprocessing(filename='../../data/Data_SAS.xlsx', output='../_misc/Data_SAS_fixed.xlsx')
 str(data)
 ```
 ```{r}
