@@ -63,9 +63,17 @@ eda_shiny <- function(data_filtered) {
                plotOutput("pca")
       ),
       tabPanel("Correlation",
-               plotlyOutput("corr"))
+               plotlyOutput("corr")
+      ),
+      tabPanel("Scatterplot",
+               selectInput("scatter_x", "Выберите переменную по X", choices = numeric_variables),
+               selectInput("scatter_y", "Выберите переменную по Y", choices = numeric_variables),
+               checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
+               plotOutput("scatterplot")
+      )
     )
   )
+  
   
   # Server для приложения Shiny
   server <- function(input, output) {
@@ -118,6 +126,31 @@ eda_shiny <- function(data_filtered) {
       # }
       
       #print(gg)
+    })
+    
+    output$scatterplot <- renderPlot({
+      x_variable <- input$scatter_x
+      y_variable <- input$scatter_y
+      split_by_visit_scatter <- input$split_by_visit_scatter
+      
+      gg <- ggplot(data_filtered, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
+        geom_point(aes(col=`antipsychotic generation`)) +
+        geom_smooth(method="lm", col = 'black') +
+        labs(title = paste("Scatterplot для", x_variable, "и", y_variable)) +
+        theme_minimal()
+      
+      if (split_by_visit_scatter) {
+        gg <- gg + facet_wrap(~visit)
+      }
+        
+      correlation_coefficient <- cor(data_filtered[[x_variable]], data_filtered[[y_variable]])
+      x_center <- mean(range(data_filtered[[x_variable]]))
+      y_center <- mean(range(data_filtered[[y_variable]]))
+      gg <- gg + annotate("text", x = x_center, y = y_center,
+                          label = paste("ρ:", round(correlation_coefficient, 2)),
+                          hjust = 0.5, vjust = 1, size = 6)
+        
+      print(gg)
     })
     
     output$corr <- renderPlotly({

@@ -121,14 +121,7 @@ preprocessing <- function(filename, output='../_misc/') {
            )) %>%
     mutate(CPZE = round(CPZE, 2),
            `antipsychotic dose` = as.factor(`antipsychotic dose`))
-  
-  
-  
-  
-  
-  
-  
-  
+
   # создание полного имени выходного файла
   output <- '../_misc/'
   filename <- "../../data/Data_SAS.xlsx"

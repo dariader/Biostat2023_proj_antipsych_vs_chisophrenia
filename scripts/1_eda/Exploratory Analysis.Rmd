@@ -1,6 +1,5 @@
 ---
 title: "EDA"
-author: "Glebus Alexandr"
 date: "`r Sys.Date()`"
 output: html_document
 ---

@@ -9,9 +9,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Glebus Alexandr" />
 
-<meta name="date" content="2023-11-27" />
+<meta name="date" content="2023-11-30" />
 
 <title>EDA</title>
 
@@ -351,8 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">EDA</h1>
-<h4 class="author">Glebus Alexandr</h4>
-<h4 class="date">2023-11-27</h4>
+<h4 class="date">2023-11-30</h4>
 
 </div>
 
@@ -974,8 +972,13 @@ differences_Comp_Z &lt;- data_compare %&gt;%
 <p>Выявлены ошибки в Total score SAS, Positive scale, Negative scale,
 General Psychopathology scale, Total score PANSS. Так же выявлены ошибки
 во всех BACS.</p>
-<p>Для замены данных правильными, создан скрипт preprocessing.R, который
-так же создает Data_SAS_fixed.xlsx в _misc</p>
+<p>Для замены данных правильными, создан скрипт preprocessing.R:</p>
+<ul>
+<li><p>Исправиляет найденные ошибки в шкалах.</p></li>
+<li><p>Добавляет 5-факторную модель.</p></li>
+<li><p>Добавляет хлорпромазиновый эквивалент.</p></li>
+<li><p>Создает Data_SAS_fixed.xlsx в _misc.</p></li>
+</ul>
 <pre class="r"><code>source(&quot;../../scripts/0_preprocessing/preprocessing.R&quot;)
 data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></pre>
 </div>
@@ -990,7 +993,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ## $ age                             &lt;dbl&gt; 33, 20, 18, 21, 40, 19, 22, 24, 27, 27…
 ## $ `disease duration`              &lt;dbl&gt; 5, 9, 4, 8, 9, 7, 8, 4, 11, 9, 3, 7, 9…
 ## $ antipsychotic                   &lt;chr&gt; &quot;рисперидон&quot;, &quot;рисперидон&quot;, &quot;арипипраз…
-## $ `antipsychotic dose`            &lt;chr&gt; &quot;6&quot;, &quot;6&quot;, &quot;20&quot;, &quot;10&quot;, &quot;30&quot;, &quot;15&quot;, &quot;400…
+## $ `antipsychotic dose`            &lt;fct&gt; 6, 6, 20, 10, 30, 15, 400, 30, 4, 20, …
 ## $ `antipsychotic generation`      &lt;chr&gt; &quot;2&quot;, &quot;2&quot;, &quot;3&quot;, &quot;3&quot;, &quot;1&quot;, &quot;3&quot;, &quot;2&quot;, &quot;1&quot;…
 ## $ `THF dose`                      &lt;dbl&gt; 0, 6, 4, 0, 6, 4, 2, 4, 4, 4, 2, 0, 4,…
 ## $ course                          &lt;chr&gt; &quot;непрерывный&quot;, &quot;непрерывный&quot;, &quot;эпизоди…
@@ -1054,13 +1057,13 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ## $ ZSC                             &lt;dbl&gt; -2.63, -0.74, 0.21, -1.73, -1.51, -0.2…
 ## $ `Tower of London`               &lt;dbl&gt; 11, 18, 22, 18, 18, 21, 18, 17, 18, 18…
 ## $ ZToL                            &lt;dbl&gt; -4.85, -0.25, 2.24, -0.25, 0.34, 1.40,…
-## $ `Comp Z`                        &lt;dbl&gt; -3.85, -1.02, -0.09, -1.42, -1.53, -0.…
-## $ Comp_Z                          &lt;dbl&gt; 35.35, 50.01, 55.47, 50.16, 51.16, 54.…
+## $ `Comp Z`                        &lt;dbl&gt; 35.35, 50.01, 55.47, 50.16, 51.16, 54.…
 ## $ negative                        &lt;dbl&gt; 31, 23, 29, 19, 19, 17, 19, 18, 16, 15…
 ## $ excitment                       &lt;dbl&gt; 21, 16, 12, 8, 15, 10, 13, 12, 11, 8, …
 ## $ cognitive                       &lt;dbl&gt; 16, 23, 14, 14, 17, 12, 13, 13, 14, 11…
 ## $ positive                        &lt;dbl&gt; 12, 17, 16, 9, 17, 10, 8, 8, 13, 10, 1…
-## $ depression                      &lt;dbl&gt; 17, 15, 23, 13, 19, 13, 14, 12, 12, 11…</code></pre>
+## $ depression                      &lt;dbl&gt; 17, 15, 23, 13, 19, 13, 14, 12, 12, 11…
+## $ CPZE                            &lt;dbl&gt; 3.59, 3.59, 4.00, 2.00, 11.24, 3.00, 3…</code></pre>
 <pre class="r"><code>data_filtered %&gt;% 
   summary()</code></pre>
 <pre><code>##       id               gender               age        disease duration
@@ -1070,13 +1073,15 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##                                        Mean   :30.67   Mean   : 9.037  
 ##                                        3rd Qu.:36.00   3rd Qu.:13.000  
 ##                                        Max.   :51.00   Max.   :32.000  
+##                                                                        
 ##  antipsychotic      antipsychotic dose antipsychotic generation
-##  Length:108         Length:108         Length:108              
-##  Class :character   Class :character   Class :character        
-##  Mode  :character   Mode  :character   Mode  :character        
-##                                                                
-##                                                                
-##                                                                
+##  Length:108         30     :20         Length:108              
+##  Class :character   20     :14         Class :character        
+##  Mode  :character   6      :10         Mode  :character        
+##                     10     :10                                 
+##                     15     :10                                 
+##                     4.5    : 8                                 
+##                     (Other):36                                 
 ##     THF dose         course           education            smoke          
 ##  Min.   : 0.000   Length:108         Length:108         Length:108        
 ##  1st Qu.: 2.000   Class :character   Class :character   Class :character  
@@ -1084,6 +1089,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   : 3.444                                                           
 ##  3rd Qu.: 4.000                                                           
 ##  Max.   :12.000                                                           
+##                                                                           
 ##     visit                gait         arm dropping    shoulder shaking
 ##  Length:108         Min.   :0.0000   Min.   :0.0000   Min.   :0.0000  
 ##  Class :character   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000  
@@ -1091,6 +1097,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##                     Mean   :0.6389   Mean   :0.4444   Mean   :0.8519  
 ##                     3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:1.0000  
 ##                     Max.   :4.0000   Max.   :2.0000   Max.   :3.0000  
+##                                                                       
 ##  elbow rigidity   wrist rigidity    head rotation     glabella tap   
 ##  Min.   :0.0000   Min.   :0.00000   Min.   :0.0000   Min.   :0.0000  
 ##  1st Qu.:0.0000   1st Qu.:0.00000   1st Qu.:0.0000   1st Qu.:0.0000  
@@ -1098,6 +1105,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :0.6944   Mean   :0.05556   Mean   :0.3704   Mean   :0.5648  
 ##  3rd Qu.:1.0000   3rd Qu.:0.00000   3rd Qu.:1.0000   3rd Qu.:1.0000  
 ##  Max.   :3.0000   Max.   :2.00000   Max.   :3.0000   Max.   :3.0000  
+##                                                                      
 ##      tremor         salivation       akathisia      Total score SAS
 ##  Min.   :0.0000   Min.   :0.0000   Min.   :0.0000   Min.   : 0.0   
 ##  1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.: 3.0   
@@ -1105,6 +1113,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :0.8704   Mean   :0.6759   Mean   :0.3333   Mean   : 5.5   
 ##  3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:0.0000   3rd Qu.: 8.0   
 ##  Max.   :3.0000   Max.   :2.0000   Max.   :3.0000   Max.   :16.0   
+##                                                                    
 ##        P1              P2              P3              P4       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:2.000   1st Qu.:2.000   1st Qu.:1.000   1st Qu.:1.000  
@@ -1112,6 +1121,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.528   Mean   :2.519   Mean   :2.324   Mean   :1.944  
 ##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:2.000  
 ##  Max.   :5.000   Max.   :6.000   Max.   :6.000   Max.   :5.000  
+##                                                                 
 ##        P5              P6              P7        Positive scale 
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   : 7.00  
 ##  1st Qu.:1.000   1st Qu.:2.000   1st Qu.:1.000   1st Qu.:12.00  
@@ -1119,6 +1129,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :1.509   Mean   :2.343   Mean   :1.639   Mean   :14.81  
 ##  3rd Qu.:2.000   3rd Qu.:3.000   3rd Qu.:2.000   3rd Qu.:18.00  
 ##  Max.   :4.000   Max.   :5.000   Max.   :6.000   Max.   :32.00  
+##                                                                 
 ##        N1              N2              N3              N4       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:2.000   1st Qu.:2.000   1st Qu.:2.000   1st Qu.:2.000  
@@ -1126,6 +1137,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.852   Mean   :2.935   Mean   :2.259   Mean   :2.926  
 ##  3rd Qu.:3.000   3rd Qu.:4.000   3rd Qu.:3.000   3rd Qu.:3.000  
 ##  Max.   :6.000   Max.   :5.000   Max.   :5.000   Max.   :6.000  
+##                                                                 
 ##        N5              N6              N7        Negative scale 
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   : 9.00  
 ##  1st Qu.:3.000   1st Qu.:2.000   1st Qu.:2.000   1st Qu.:15.00  
@@ -1133,6 +1145,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.991   Mean   :2.472   Mean   :2.259   Mean   :18.69  
 ##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:22.00  
 ##  Max.   :6.000   Max.   :5.000   Max.   :5.000   Max.   :32.00  
+##                                                                 
 ##        G1              G2              G3              G4       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:2.000   1st Qu.:2.000   1st Qu.:1.000   1st Qu.:2.000  
@@ -1140,6 +1153,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.176   Mean   :2.556   Mean   :1.972   Mean   :2.398  
 ##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:2.000   3rd Qu.:3.000  
 ##  Max.   :4.000   Max.   :5.000   Max.   :5.000   Max.   :6.000  
+##                                                                 
 ##        G5              G6              G7              G8       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:1.000   1st Qu.:2.000   1st Qu.:2.000   1st Qu.:1.000  
@@ -1147,6 +1161,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :1.991   Mean   :2.537   Mean   :2.472   Mean   :1.694  
 ##  3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:3.000   3rd Qu.:2.000  
 ##  Max.   :5.000   Max.   :6.000   Max.   :5.000   Max.   :5.000  
+##                                                                 
 ##        G9             G10             G11             G12       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:2.000   1st Qu.:1.000   1st Qu.:2.000   1st Qu.:2.000  
@@ -1154,6 +1169,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.407   Mean   :1.546   Mean   :2.769   Mean   :2.769  
 ##  3rd Qu.:3.000   3rd Qu.:2.000   3rd Qu.:3.000   3rd Qu.:3.250  
 ##  Max.   :5.000   Max.   :3.000   Max.   :5.000   Max.   :6.000  
+##                                                                 
 ##       G13             G14             G15             G16       
 ##  Min.   :1.000   Min.   :1.000   Min.   :1.000   Min.   :1.000  
 ##  1st Qu.:2.000   1st Qu.:1.000   1st Qu.:2.000   1st Qu.:2.000  
@@ -1161,6 +1177,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :2.704   Mean   :1.861   Mean   :2.241   Mean   :2.704  
 ##  3rd Qu.:3.000   3rd Qu.:2.000   3rd Qu.:3.000   3rd Qu.:3.000  
 ##  Max.   :5.000   Max.   :5.000   Max.   :5.000   Max.   :6.000  
+##                                                                 
 ##  General Psychopathology scale Total score PANSS Verbal Memory  
 ##  Min.   :17.0                  Min.   : 36.0     Min.   :18.00  
 ##  1st Qu.:30.0                  1st Qu.: 58.0     1st Qu.:31.00  
@@ -1168,6 +1185,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :36.8                  Mean   : 70.3     Mean   :37.84  
 ##  3rd Qu.:41.0                  3rd Qu.: 80.0     3rd Qu.:43.25  
 ##  Max.   :62.0                  Max.   :122.0     Max.   :67.00  
+##                                                                 
 ##       ZVM         Digit Sequencing      ZDS         Token Motor Task
 ##  Min.   :-4.570   Min.   : 3.00    Min.   :-5.130   Min.   : 24.00  
 ##  1st Qu.:-2.587   1st Qu.:14.00    1st Qu.:-2.368   1st Qu.: 60.00  
@@ -1175,6 +1193,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :-1.581   Mean   :16.44    Mean   :-1.509   Mean   : 68.19  
 ##  3rd Qu.:-0.795   3rd Qu.:19.00    3rd Qu.:-0.635   3rd Qu.: 78.00  
 ##  Max.   : 2.140   Max.   :26.00    Max.   : 1.360   Max.   :100.00  
+##                                                                     
 ##       ZMT          Verbal Fluency       ZVF          Symbol Coding  
 ##  Min.   :-5.5300   Min.   :17.00   Min.   :-3.8400   Min.   :17.00  
 ##  1st Qu.:-1.2050   1st Qu.:35.00   1st Qu.:-1.8950   1st Qu.:36.00  
@@ -1182,30 +1201,31 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 ##  Mean   :-0.3736   Mean   :44.55   Mean   :-1.1037   Mean   :43.76  
 ##  3rd Qu.: 0.5800   3rd Qu.:54.25   3rd Qu.:-0.2325   3rd Qu.:50.25  
 ##  Max.   : 3.1400   Max.   :71.00   Max.   : 1.0300   Max.   :69.00  
-##       ZSC         Tower of London      ZToL             Comp Z      
-##  Min.   :-7.010   Min.   : 7.00   Min.   :-6.6500   Min.   :-5.560  
-##  1st Qu.:-3.470   1st Qu.:15.00   1st Qu.:-1.4200   1st Qu.:-2.930  
-##  Median :-2.400   Median :18.00   Median :-0.2500   Median :-1.545  
-##  Mean   :-2.287   Mean   :16.93   Mean   :-0.6797   Mean   :-1.890  
-##  3rd Qu.:-1.080   3rd Qu.:19.00   3rd Qu.: 0.3400   3rd Qu.:-0.750  
-##  Max.   : 0.720   Max.   :22.00   Max.   : 2.2400   Max.   : 0.520  
-##      Comp_Z         negative       excitment        cognitive    
-##  Min.   :14.19   Min.   : 7.00   Min.   : 4.000   Min.   : 5.00  
-##  1st Qu.:39.54   1st Qu.:12.00   1st Qu.: 6.000   1st Qu.:10.00  
-##  Median :47.87   Median :16.00   Median : 7.000   Median :11.00  
-##  Mean   :46.04   Mean   :16.15   Mean   : 7.843   Mean   :11.81  
-##  3rd Qu.:53.11   3rd Qu.:19.00   3rd Qu.: 9.000   3rd Qu.:14.00  
-##  Max.   :62.18   Max.   :31.00   Max.   :21.000   Max.   :23.00  
-##     positive        depression   
-##  Min.   : 4.000   Min.   : 5.00  
-##  1st Qu.: 7.000   1st Qu.: 9.00  
-##  Median : 8.000   Median :11.00  
-##  Mean   : 8.787   Mean   :11.48  
-##  3rd Qu.:11.000   3rd Qu.:13.00  
-##  Max.   :17.000   Max.   :23.00</code></pre>
-<p>Дальше идет куча графиков: сначала для категориальных переменных
-барплоты, а потом для количественных - гистограммы.</p>
-<p>Категориальные переменные:</p>
+##                                                                     
+##       ZSC         Tower of London      ZToL             Comp Z     
+##  Min.   :-7.010   Min.   : 7.00   Min.   :-6.6500   Min.   :14.19  
+##  1st Qu.:-3.470   1st Qu.:15.00   1st Qu.:-1.4200   1st Qu.:39.54  
+##  Median :-2.400   Median :18.00   Median :-0.2500   Median :47.87  
+##  Mean   :-2.287   Mean   :16.93   Mean   :-0.6797   Mean   :46.04  
+##  3rd Qu.:-1.080   3rd Qu.:19.00   3rd Qu.: 0.3400   3rd Qu.:53.11  
+##  Max.   : 0.720   Max.   :22.00   Max.   : 2.2400   Max.   :62.18  
+##                                                                    
+##     negative       excitment        cognitive        positive     
+##  Min.   : 7.00   Min.   : 4.000   Min.   : 5.00   Min.   : 4.000  
+##  1st Qu.:12.00   1st Qu.: 6.000   1st Qu.:10.00   1st Qu.: 7.000  
+##  Median :16.00   Median : 7.000   Median :11.00   Median : 8.000  
+##  Mean   :16.15   Mean   : 7.843   Mean   :11.81   Mean   : 8.787  
+##  3rd Qu.:19.00   3rd Qu.: 9.000   3rd Qu.:14.00   3rd Qu.:11.000  
+##  Max.   :31.00   Max.   :21.000   Max.   :23.00   Max.   :17.000  
+##                                                                   
+##    depression         CPZE       
+##  Min.   : 5.00   Min.   : 0.380  
+##  1st Qu.: 9.00   1st Qu.: 2.000  
+##  Median :11.00   Median : 3.000  
+##  Mean   :11.48   Mean   : 3.725  
+##  3rd Qu.:13.00   3rd Qu.: 4.500  
+##  Max.   :23.00   Max.   :11.240  
+## </code></pre>
 <p>Eda с помощью Shiny</p>
 <pre class="r"><code>source(&quot;../../scripts/1_eda/eda_shiny_func.R&quot;)
 eda_shiny(data_filtered)</code></pre>
