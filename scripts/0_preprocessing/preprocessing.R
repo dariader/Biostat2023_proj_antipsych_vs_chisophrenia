@@ -95,7 +95,7 @@ preprocessing <- function(filename, output='../_misc/') {
     )
   
   data <- data %>% mutate(
-    Comp_Z = round(rowSums(select(., ZVM:ZToL))/ 3.96, 2))
+    `Comp Z` = round(rowSums(select(., ZVM:ZToL))/ 3.96, 2))
   
   data <- data %>% mutate(
     negative = N2 + N4 + N6 + N3 + N1 + G16,
@@ -104,6 +104,30 @@ preprocessing <- function(filename, output='../_misc/') {
     positive = P1 + G9 + P5 + P6,
     depression = G2 + G3 + G6 + G1 + G15
   )
+  
+  data <- data %>%
+    mutate(`antipsychotic dose` = as.numeric(gsub(",", ".", `antipsychotic dose`)),
+           CPZE = case_when(
+             antipsychotic == "арипипразол" ~ `antipsychotic dose` / 5,
+             antipsychotic == "галоперидол" ~ `antipsychotic dose` / 2.67,
+             antipsychotic == "зуклопентиксол" ~ `antipsychotic dose` / 10,
+             antipsychotic %in% c("рисперидон", "карипразин") ~ `antipsychotic dose` / 1.67,
+             antipsychotic == "кветиапин" ~ `antipsychotic dose` / 133.33,
+             antipsychotic == "оланзапин" ~ `antipsychotic dose` / 3.33,
+             antipsychotic == "палиперидон" ~ `antipsychotic dose` / 2.0,
+             antipsychotic == "трифлуоперазин" ~ `antipsychotic dose` / 6.67,
+             antipsychotic == "флупентиксол" ~ `antipsychotic dose` / 2.0,
+             TRUE ~ NA_real_
+           )) %>%
+    mutate(CPZE = round(CPZE, 2),
+           `antipsychotic dose` = as.factor(`antipsychotic dose`))
+  
+  
+  
+  
+  
+  
+  
   
   # создание полного имени выходного файла
   output <- '../_misc/'

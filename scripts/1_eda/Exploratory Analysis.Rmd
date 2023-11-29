@@ -238,7 +238,15 @@ print(differences_Comp_Z[, c("id", "Comp Z", "Comp_Z_auto")])
 Выявлены ошибки в Total score SAS, Positive scale, Negative scale, General Psychopathology scale, Total score PANSS.
 Так же выявлены ошибки во всех BACS.
 
-Для замены данных правильными, создан скрипт preprocessing.R, который так же создает Data_SAS_fixed.xlsx в _misc
+Для замены данных правильными, создан скрипт preprocessing.R: 
+
+- Исправиляет найденные ошибки в шкалах.
+
+- Добавляет 5-факторную модель.
+
+- Добавляет хлорпромазиновый эквивалент.
+
+- Создает Data_SAS_fixed.xlsx в _misc.
 
 ```{r}
 source("../../scripts/0_preprocessing/preprocessing.R")
