@@ -263,6 +263,12 @@ data_filtered %>%
 data_filtered %>% 
   summary()
 ```
+```{r}
+data_filtered %>% 
+  select(is.numeric) %>% 
+  names()
+```
+
 
 Eda с помощью Shiny
 
@@ -270,6 +276,136 @@ Eda с помощью Shiny
 source("../../scripts/1_eda/eda_shiny_func.R")
 eda_shiny(data_filtered)
 ```
+# Динамика
+
+Исследуем изменение количественных переменных между визитами используя t.test ($\alpha = 0.05$). Укажем значимость в significant_flag. 
+Перед этим проведем shapiro.test ($\alpha = 0.05$).
+
+```{r}
+
+library(dplyr)
+
+# Указываем переменные, для которых хотим провести t-тест
+selected_variables <- data_filtered %>% select_if(is.numeric) %>% names()
+
+# Проводим t-тест и тест на нормальность для каждой переменной
+alpha = 0.05  # Устанавливаем уровень значимости
+t_test_results <- lapply(selected_variables, function(variable) {
+  # Проводим тест на нормальность
+  normality_test_result <- shapiro.test(data_filtered[[variable]])
+  
+  # Проводим t-тест независимо от результата теста на нормальность
+  t_test_result <- t.test(data_filtered[data_filtered$visit == "1", variable],
+                           data_filtered[data_filtered$visit == "2", variable])
+  
+
+  
+  # Собираем результаты в data frame
+  result_df <- data.frame(
+    Variable = variable,
+    t_value = t_test_result$statistic,
+    p_value = t_test_result$p.value,
+    significant_flag = ifelse(t_test_result$p.value < alpha, "1", "0"),
+    normality_p_value = normality_test_result$p.value,
+    normality_result = ifelse(normality_test_result$p.value > 0.05, "Normal", "Not normal")
+  )
+  return(result_df)
+})
+
+# Объединяем результаты
+t_test_results <- bind_rows(t_test_results)
+
+t_test_results
+
+
+
+
+
+```
+
+Только значимые:
+
+```{r}
+significant_variables <- t_test_results %>% 
+  filter(significant_flag == 1) %>% 
+  select(-significant_flag)
+significant_variables
+```
+
+Визуализируем:
+
+```{r}
+# Фильтрация значимых результатов
+significant_results <- t_test_results %>%
+  filter(significant_flag == "1")
+
+# Построение столбчатой диаграммы
+ggplot(significant_results, aes(x = Variable, y = p_value)) +
+  geom_bar(stat = "identity") +
+  geom_hline(yintercept = alpha, linetype = "dashed", color = "green") +  # Добавление горизонтальной линии для уровня значимости
+  labs(title = "Significance of Variables between Visit 1 and Visit 2",
+       x = "Variable",
+       y = "p-value") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+```
+
+Ладно, не будем сравнивать p-value, просто отметим эти значимые переменные.
+
+Построим боксплоты для значимых переменных со значимыми различиями между визитами.
+```{r}
+# Строим боксплоты
+for (variable in significant_variables$Variable) {
+  p <- ggplot(data_filtered, aes(x = visit, y = !!sym(variable), fill = visit)) +
+    geom_boxplot() +
+    labs(title = paste("Boxplot for", variable),
+         x = "Visit",
+         y = variable)
+  print(p)
+}
+```
+
+Создадим датафрейм, содержащие разницу количественных показателей между визитами.
+
+```{r}
+# Выбираем только числовые переменные
+selected_variables <- data_filtered %>%
+  select_if(is.numeric) %>% 
+  names()
+
+# Создаем новый датафрейм для хранения разницы
+difference_df <- data_filtered %>%
+  select(id, visit, all_of(selected_variables)) %>%
+  group_by(id) %>%
+  summarise(across(selected_variables, ~diff(.)))
+difference_df
+```
+
+Как лучше визуализировать? может быть так:
+
+```{r}
+ggplot(difference_df, aes(x = id, y = `Total score SAS`)) +
+  geom_point() +
+  labs(title = "Относительная разница между визитами", x = "ID", y = 'gait') + 
+  theme_minimal()
+```
+Или вот так:
+
+```{r}
+ggplot(difference_df, aes(x = `Total score SAS`)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  labs(title = "Гистограмма относительной разницы между визитами Total score SAS", x = "Значение переменной", y = "Частота") + 
+  theme_minimal()
+```
+
+А может быть shiny прикрутить, для всего этого?
+Доступна только вкладка "Числовые переменные" без разбития по visit
+```{r eval=FALSE}
+eda_shiny(difference_df)
+```
+
+Или что то другое...
+
 
 
 

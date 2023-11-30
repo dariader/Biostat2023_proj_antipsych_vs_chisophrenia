@@ -7,42 +7,16 @@ library(FactoMineR)
 library(ggfortify)
 library(plotly)
 
-# установление рабочей директории
+# Установление рабочей директории
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-#setwd(getSrcDirectory(function(x) {x}))
 
-source('../../scripts/0_preprocessing/preprocessing.R')
-
-eda_shiny <- function(data_filtered) {
+eda_shiny <- function(data) {
   
-  # Переводим числовые столбцы в числовой формат
-  numeric_columns <- c("age", "disease duration","antipsychotic dose", "THF dose", "gait", "arm dropping",
-                       "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
-                       "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
-                       "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
-                       "N1", "N2", "N3", "N4", "N5", "N6", "N7", "Negative scale",
-                       "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
-                       "G11", "G12", "G13", "G14", "G15", "G16", "General Psychopathology scale",
-                       "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
-                       "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
-                       "Tower of London", "ZToL", "Comp Z", "negative", "excitment", "cognitive", "positive", "depression")
-  
-  # все десятичные разделители делаем точками
-  data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], function(x) {
-    as.numeric(gsub(",", ".", x))
-  })
-  
-  # Переводим категориальные столбцы в факторы
-  factor_columns <- c("gender", "visit", "antipsychotic",
-                      "course", "education", "smoke", "antipsychotic generation")
-  
-  data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
   # Категориальные переменные
-  categorical_variables <- data_filtered %>% select_if(is.factor) %>% names()
+  categorical_variables <- data %>% select_if(is.factor) %>% names()
   
   # Нумерические переменные
-  numeric_variables <- data_filtered %>% select_if(is.numeric) %>% names()
-  
+  numeric_variables <- data %>% select_if(is.numeric) %>% names()
   
   # UI для приложения Shiny
   ui <- fluidPage(
@@ -55,7 +29,10 @@ eda_shiny <- function(data_filtered) {
       tabPanel("Числовые переменные",
                selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
                checkboxInput("split_by_visit_num", "Разбить по 'visit'", value = FALSE),
-               plotOutput("num_histogram")
+               radioButtons("plot_type", "Выберите тип графика:",
+                            choices = c("Гистограмма" = "histogram", "Плотность" = "density"),
+                            selected = "histogram"),
+               plotOutput("num_plot")
       ),
       tabPanel("PCA",
                selectInput("pca_variable", "Выберите переменную для группировки", choices = categorical_variables),
@@ -74,18 +51,16 @@ eda_shiny <- function(data_filtered) {
     )
   )
   
-  
   # Server для приложения Shiny
   server <- function(input, output) {
     output$cat_barplot <- renderPlot({
       variable <- input$cat_variable
       split_by_visit <- input$split_by_visit
       
-      gg <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
+      gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
         geom_bar() +
         labs(title = paste("Столбчатая диаграмма для", variable)) +
-        theme_minimal() +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        theme_minimal()
       
       if (split_by_visit) {
         gg <- gg + facet_wrap(~visit)
@@ -94,14 +69,19 @@ eda_shiny <- function(data_filtered) {
       print(gg)
     })
     
-    output$num_histogram <- renderPlot({
+    output$num_plot <- renderPlot({
       variable <- input$num_variable
       split_by_visit_num <- input$split_by_visit_num
+      plot_type <- input$plot_type
       
-      gg <- ggplot(data_filtered, aes(x = !!as.symbol(variable))) +
-        geom_histogram(fill = "skyblue", bins = 10) +
-        labs(title = paste("Гистограмма для", variable)) +
-        theme_minimal()
+      gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
+        labs(title = paste("График для", variable))
+      
+      if (plot_type == "histogram") {
+        gg <- gg + geom_histogram(fill = "skyblue", bins = 10)
+      } else if (plot_type == "density") {
+        gg <- gg + geom_density(fill = "skyblue")
+      }
       
       if (split_by_visit_num) {
         gg <- gg + facet_wrap(~visit)
@@ -109,6 +89,7 @@ eda_shiny <- function(data_filtered) {
       
       print(gg)
     })
+    
     #corrplot(corr_matrix)
     #fviz_eig(data.pca, addlabels = TRUE)
     #fviz_cos2(data.pca, choice = "var", axes = 1:2)
@@ -116,9 +97,9 @@ eda_shiny <- function(data_filtered) {
     output$pca <- renderPlot({
       variable <- input$pca_variable
       split_by_visit_num <- input$split_by_visit_pca
-      data_num <- data_filtered[,c(numeric_columns,factor_columns)]
+      data_num <- data[,c(numeric_columns,factor_columns)]
       data_num <- data_num[complete.cases(data_num),]
-      data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
+      data_num[factor_columns] <- lapply(data[factor_columns], as.integer)
       
       data.pca <- princomp(cor(data_num))
       # if (split_by_visit_num) {
@@ -133,8 +114,8 @@ eda_shiny <- function(data_filtered) {
       y_variable <- input$scatter_y
       split_by_visit_scatter <- input$split_by_visit_scatter
       
-      gg <- ggplot(data_filtered, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
-        geom_point(aes(col=`antipsychotic generation`)) +
+      gg <- ggplot(data, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
+        geom_point(aes(col=gender, size=`antipsychotic generation`)) +
         geom_smooth(method="lm", col = 'black') +
         labs(title = paste("Scatterplot для", x_variable, "и", y_variable)) +
         theme_minimal()
@@ -142,20 +123,20 @@ eda_shiny <- function(data_filtered) {
       if (split_by_visit_scatter) {
         gg <- gg + facet_wrap(~visit)
       }
-        
-      correlation_coefficient <- cor(data_filtered[[x_variable]], data_filtered[[y_variable]])
-      x_center <- mean(range(data_filtered[[x_variable]]))
-      y_center <- mean(range(data_filtered[[y_variable]]))
+      
+      correlation_coefficient <- cor(data[[x_variable]], data[[y_variable]])
+      x_center <- mean(range(data[[x_variable]]))
+      y_center <- mean(range(data[[y_variable]]))
       gg <- gg + annotate("text", x = x_center, y = y_center,
                           label = paste("ρ:", round(correlation_coefficient, 2)),
                           hjust = 0.5, vjust = 1, size = 6)
-        
+      
       print(gg)
     })
     
     output$corr <- renderPlotly({
-      data_num <- data_filtered[,c(numeric_columns,factor_columns)]
-      data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
+      data_num <- data[,c(numeric_columns,factor_columns)]
+      data_num[factor_columns] <- lapply(data[factor_columns], as.integer)
       cor_matrix <- cor(data_num)
       
       # Create a correlation plot using plot_ly
@@ -187,7 +168,3 @@ eda_shiny <- function(data_filtered) {
   # Запуск приложения Shiny
   shinyApp(ui, server)
 }
-    
-
-
-

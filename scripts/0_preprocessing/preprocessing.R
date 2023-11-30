@@ -19,16 +19,24 @@ preprocessing <- function(filename, output='../_misc/') {
                        "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
                        "Tower of London", "ZToL", "Comp Z")
   
+  factor_columns <- c("gender", "visit", "antipsychotic",
+                      "course", "education", "smoke", "antipsychotic generation")
+  
   # все десятичные разделители делаем точками
   data[numeric_columns] <- lapply(data[numeric_columns], function(x) {
     as.numeric(gsub(",", ".", x))
   })
+  
+  data[factor_columns] <- lapply(data[factor_columns], as.factor)
+  
+  
   data <- data %>%
     mutate(`Total score SAS` = rowSums(select(., gait:akathisia)),
            `Positive scale` = rowSums(select(., P1:P7)),
            `Negative scale` = rowSums(select(., N1:N7)),
            `General Psychopathology scale` = rowSums(select(., G1:G16)),
            `Total score PANSS` = `Positive scale` + `Negative scale` + `General Psychopathology scale`)  
+  
   # Расчет Z-баллов по нормативным данным для российской популяции [Саркисян, Г. Р., Гурович, И. Я., & Киф, Р. С. (2010). Нормативные данные для российской популяции и стандартизация шкалы «Краткая оценка когнитивных функций у пациентов с шизофренией» (BACS). Социальная и клиническая психиатрия, 20 (3), 13-19.]
   data <- data %>%
     mutate(
