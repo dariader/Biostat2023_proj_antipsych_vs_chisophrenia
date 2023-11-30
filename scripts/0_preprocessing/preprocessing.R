@@ -29,7 +29,7 @@ preprocessing <- function(filename, output='../_misc/') {
            `Negative scale` = rowSums(select(., N1:N7)),
            `General Psychopathology scale` = rowSums(select(., G1:G16)),
            `Total score PANSS` = `Positive scale` + `Negative scale` + `General Psychopathology scale`)  
-  
+  # Расчет Z-баллов по нормативным данным для российской популяции [Саркисян, Г. Р., Гурович, И. Я., & Киф, Р. С. (2010). Нормативные данные для российской популяции и стандартизация шкалы «Краткая оценка когнитивных функций у пациентов с шизофренией» (BACS). Социальная и клиническая психиатрия, 20 (3), 13-19.]
   data <- data %>%
     mutate(
       ZVM = case_when(
@@ -96,7 +96,8 @@ preprocessing <- function(filename, output='../_misc/') {
   
   data <- data %>% mutate(
     `Comp Z` = round(rowSums(select(., ZVM:ZToL))/ 3.96, 2))
-  
+
+  # Расчет пятифакторной модели шищофрении по PANSS [Lindenmayer, J. P., Bernstein-Hyman, R., & Grochowski, S. (1994). A new five factor model of schizophrenia. The Psychiatric quarterly, 65(4), 299–322. https://doi.org/10.1007/BF02354306]
   data <- data %>% mutate(
     negative = N2 + N4 + N6 + N3 + N1 + G16,
     excitment = P4 + G14 + P7 + G4,
@@ -104,15 +105,15 @@ preprocessing <- function(filename, output='../_misc/') {
     positive = P1 + G9 + P5 + P6,
     depression = G2 + G3 + G6 + G1 + G15
   )
-  
+
+  # Расчет эквивалентов суточных доз антипсихотиков к 100 мг перорального хлорпромазина [Leucht, S., Samara, M., Heres, S., & Davis, J. M. (2016). Dose Equivalents for Antipsychotic Drugs: The DDD Method. Schizophrenia bulletin, 42 Suppl 1(Suppl 1), S90–S94. https://doi.org/10.1093/schbul/sbv167]
   data <- data %>%
     mutate(`antipsychotic dose` = as.numeric(gsub(",", ".", `antipsychotic dose`)),
            CPZE = case_when(
              antipsychotic == "арипипразол" ~ `antipsychotic dose` / 5,
              antipsychotic == "галоперидол" ~ `antipsychotic dose` / 2.67,
              antipsychotic == "зуклопентиксол" ~ `antipsychotic dose` / 10,
-             antipsychotic %in% c("рисперидон", "карипразин") ~ `antipsychotic dose` / 1.67,
-             antipsychotic == "кветиапин" ~ `antipsychotic dose` / 133.33,
+             antipsychotic %in% c("рисперидон", "карипразин") ~ `antipsychotic dose` / 1.67, # [Németh, György et al. “Cariprazine versus risperidone monotherapy for treatment of predominant negative symptoms in patients with schizophrenia: a randomised, double-blind, controlled trial.” Lancet (London, England) vol. 389,10074 (2017): 1103-1113. doi:10.1016/S0140-6736(17)30060-0]
              antipsychotic == "оланзапин" ~ `antipsychotic dose` / 3.33,
              antipsychotic == "палиперидон" ~ `antipsychotic dose` / 2.0,
              antipsychotic == "трифлуоперазин" ~ `antipsychotic dose` / 6.67,
