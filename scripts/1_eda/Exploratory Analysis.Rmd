@@ -19,10 +19,9 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ## EDA
 
 ```{r}
-
 data <- readxl::read_xlsx('../../data/Data_SAS.xlsx', sheet = 2)
-data %>% glimpse()
-data %>% summary()
+#data %>% glimpse()
+#data %>% summary()
 ```
 
 
@@ -56,7 +55,7 @@ factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose",
 data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
 
 
-data_filtered %>% glimpse
+#data_filtered %>% glimpse
 ```
 
 ## Проверка шкал
@@ -254,19 +253,14 @@ data_filtered <- preprocessing("../../data/Data_SAS.xlsx")
 
 ## EDA - исправленные данные
 
-```{r}
+```{r eval=FALSE}
 data_filtered %>% 
   glimpse()
 ```
 
 ```{r}
-data_filtered %>% 
-  summary()
-```
-```{r}
-data_filtered %>% 
-  select(is.numeric) %>% 
-  names()
+#data_filtered %>% 
+# summary()
 ```
 
 
@@ -278,34 +272,41 @@ eda_shiny(data_filtered)
 ```
 # Динамика
 
-Исследуем изменение количественных переменных между визитами используя t.test ($\alpha = 0.05$). Укажем значимость в significant_flag. 
-Перед этим проведем shapiro.test ($\alpha = 0.05$).
+Исследуем изменение количественных переменных между визитами используя:
+
+- Тест Шапиро-Уилка для определение нормальности распределения. Укажемв normality_result.
+
+- t-тест для зависимых выборок (paired=TRUE, $\alpha = 0.05$). Укажем значимость в t_significant_flag. 
+
+- тест Уилкоксона для парных данных ($\alpha = 0.05$). Укажем значимость в wilcoxon_significant_flag 
 
 ```{r}
-
-library(dplyr)
-
 # Указываем переменные, для которых хотим провести t-тест
 selected_variables <- data_filtered %>% select_if(is.numeric) %>% names()
 
 # Проводим t-тест и тест на нормальность для каждой переменной
 alpha = 0.05  # Устанавливаем уровень значимости
-t_test_results <- lapply(selected_variables, function(variable) {
+test_results <- lapply(selected_variables, function(variable) {
   # Проводим тест на нормальность
   normality_test_result <- shapiro.test(data_filtered[[variable]])
   
   # Проводим t-тест независимо от результата теста на нормальность
-  t_test_result <- t.test(data_filtered[data_filtered$visit == "1", variable],
-                           data_filtered[data_filtered$visit == "2", variable])
+  visit_1 <- data_filtered %>% 
+    filter(visit == 1) %>% 
+    pull(variable)
+  visit_2 <- data_filtered %>% 
+    filter(visit == 2) %>% 
+    pull(variable)
+  test_result <- t.test(visit_1, visit_2, paired=TRUE)
   
 
   
   # Собираем результаты в data frame
   result_df <- data.frame(
     Variable = variable,
-    t_value = t_test_result$statistic,
-    p_value = t_test_result$p.value,
-    significant_flag = ifelse(t_test_result$p.value < alpha, "1", "0"),
+    t_value = test_result$statistic,
+    t_p_value = test_result$p.value,
+    t_significant_flag = ifelse(test_result$p.value < alpha, "1", "0"),
     normality_p_value = normality_test_result$p.value,
     normality_result = ifelse(normality_test_result$p.value > 0.05, "Normal", "Not normal")
   )
@@ -313,44 +314,38 @@ t_test_results <- lapply(selected_variables, function(variable) {
 })
 
 # Объединяем результаты
-t_test_results <- bind_rows(t_test_results)
+test_results <- bind_rows(test_results)
 
-t_test_results
+# Добавляем тест Уилкоксона к результатам
+wilcoxon_test_result <- lapply(selected_variables, function(variable) {
+  wilcoxon_result <- wilcox.test(data_filtered[[variable]] ~ data_filtered$visit)
+  result_df <- data.frame(
+    Variable = variable,
+    wilcoxon_statistic = wilcoxon_result$statistic,
+    wilcoxon_p_value = wilcoxon_result$p.value,
+    wilcoxon_significant_flag = ifelse(wilcoxon_result$p.value < alpha, "1", "0")
+  )
+  return(result_df)
+})
 
+# Объединяем результаты Уилкоксона с предыдущими результатами
+wilcoxon_test_result <- bind_rows(wilcoxon_test_result)
+test_results <- left_join(test_results, wilcoxon_test_result, by = "Variable")
 
-
-
+# Выводим результаты
+test_results
 
 ```
+
 
 Только значимые:
 
 ```{r}
-significant_variables <- t_test_results %>% 
-  filter(significant_flag == 1) %>% 
-  select(-significant_flag)
-significant_variables
+significant_variables <- test_results %>% 
+  filter(t_significant_flag == 1 | wilcoxon_significant_flag == 1)
+significant_variables %>% 
+  select(Variable, t_significant_flag, wilcoxon_significant_flag, normality_result)
 ```
-
-Визуализируем:
-
-```{r}
-# Фильтрация значимых результатов
-significant_results <- t_test_results %>%
-  filter(significant_flag == "1")
-
-# Построение столбчатой диаграммы
-ggplot(significant_results, aes(x = Variable, y = p_value)) +
-  geom_bar(stat = "identity") +
-  geom_hline(yintercept = alpha, linetype = "dashed", color = "green") +  # Добавление горизонтальной линии для уровня значимости
-  labs(title = "Significance of Variables between Visit 1 and Visit 2",
-       x = "Variable",
-       y = "p-value") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
-```
-
-Ладно, не будем сравнивать p-value, просто отметим эти значимые переменные.
 
 Построим боксплоты для значимых переменных со значимыми различиями между визитами.
 ```{r}
@@ -399,12 +394,14 @@ ggplot(difference_df, aes(x = `Total score SAS`)) +
 ```
 
 А может быть shiny прикрутить, для всего этого?
-Доступна только вкладка "Числовые переменные" без разбития по visit
+Доступна только вкладка "Числовые переменные" без разбития по visit.
 ```{r eval=FALSE}
 eda_shiny(difference_df)
 ```
 
 Или что то другое...
+
+
 
 
 
