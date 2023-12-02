@@ -130,7 +130,7 @@ eda_shiny <- function(data) {
       x_center <- mean(range(data[[x_variable]]))
       y_center <- mean(range(data[[y_variable]]))
       gg <- gg + annotate("text", x = x_center, y = y_center,
-                          label = paste("ρ:", round(correlation_coefficient, 2)),
+                          label = paste("r:", round(correlation_coefficient, 2)),
                           hjust = 0.5, vjust = 1, size = 6)
       
       print(gg)

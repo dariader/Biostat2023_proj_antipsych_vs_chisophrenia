@@ -1,0 +1,154 @@
+---
+title: "Dag"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dagitty)
+```
+
+Создадим каузальную схему. (Можно ли использовать двойные связи?)
+
+```{r height=8, weight=8}
+# Создание DAG
+dag <- dagitty("dag {
+  DEPRESSION -> EXTRAPYRAMIDAL_SYMPTOMS
+  NEGATIVE_SYMPTOMS -> EXTRAPYRAMIDAL_SYMPTOMS
+  NEGATIVE_SYMPTOMS -> DEPRESSION
+  DEPRESSION -> NEGATIVE_SYMPTOMS
+  ANTIPSYCHOTICS -> EXTRAPYRAMIDAL_SYMPTOMS
+  ANTIPSYCHOTICS -> COGNITIVE_FUNCTIONS
+  TGF -> EXTRAPYRAMIDAL_SYMPTOMS
+  TGF -> COGNITIVE_FUNCTIONS
+  SCHIZOPHRENIA -> EXTRAPYRAMIDAL_SYMPTOMS
+  SCHIZOPHRENIA -> COGNITIVE_FUNCTIONS
+  EDUCATION -> COGNITIVE_FUNCTIONS
+  GENDER -> COGNITIVE_FUNCTIONS
+  AGE -> COGNITIVE_FUNCTIONS
+  SMOKING -> COGNITIVE_FUNCTIONS
+  COURSE_TYPE -> COGNITIVE_FUNCTIONS
+  AGE_MANIFEST -> COURSE_TYPE
+  EXTRAPYRAMIDAL_SYMPTOMS -> DEPRESSION
+  EXTRAPYRAMIDAL_SYMPTOMS -> NEGATIVE_SYMPTOMS
+  EXTRAPYRAMIDAL_SYMPTOMS [exposure]
+  COGNITIVE_FUNCTIONS [outcome]
+}")
+
+# Задание координат
+coordinates(dag) <- list(
+  x = c(EXTRAPYRAMIDAL_SYMPTOMS = 0, 
+        COGNITIVE_FUNCTIONS = 8,
+        ANTIPSYCHOTICS = 4, 
+        TGF = 4,
+        SCHIZOPHRENIA = 4,
+        EDUCATION = 12,
+        GENDER = 12,
+        AGE = 12,
+        SMOKING = 12,
+        COURSE_TYPE = 12,
+        AGE_MANIFEST = 12,
+        DEPRESSION = -2,
+        NEGATIVE_SYMPTOMS = -2),
+  y = c(EXTRAPYRAMIDAL_SYMPTOMS = 1, 
+        COGNITIVE_FUNCTIONS = 1,
+        ANTIPSYCHOTICS = -1, 
+        TGF = 2,
+        SCHIZOPHRENIA = 4,
+        EDUCATION = 0,
+        GENDER = 1,
+        AGE = 2,
+        SMOKING = 3,
+        COURSE_TYPE = 4,
+        AGE_MANIFEST = 5,
+        DEPRESSION = -1,
+        NEGATIVE_SYMPTOMS = 4)
+)
+
+# Визуализация DAG
+plot(dag)
+```
+Ковариационная матрица (корреляционная матрица)
+
+```{r}
+impliedCovarianceMatrix(dag, b.default = 0.5, standardized = TRUE)
+```
+Minimal adjustment sets
+```{r}
+adjustmentSets(dag)
+```
+Выведем все adjustment sets
+```{r}
+#adjustmentSets(dag, type = 'all')
+```
+
+Используем пакет ggdag
+
+```{r}
+library(ggplot2)
+library(ggdag)
+
+coords <- list(
+  x = c(EXTRAPYRAMIDAL_SYMPTOMS = 0, 
+        COGNITIVE_FUNCTIONS = 8,
+        ANTIPSYCHOTICS = 4, 
+        TGF = 4,
+        SCHIZOPHRENIA = 4,
+        EDUCATION = 12,
+        GENDER = 12,
+        AGE = 12,
+        SMOKING = 12,
+        COURSE_TYPE = 12,
+        AGE_MANIFEST = 12,
+        DEPRESSION = -2,
+        NEGATIVE_SYMPTOMS = -2),
+  y = c(EXTRAPYRAMIDAL_SYMPTOMS = 1, 
+        COGNITIVE_FUNCTIONS = 1,
+        ANTIPSYCHOTICS = -1, 
+        TGF = 2,
+        SCHIZOPHRENIA = 4,
+        EDUCATION = 0,
+        GENDER = 1,
+        AGE = 2,
+        SMOKING = 3,
+        COURSE_TYPE = 4,
+        AGE_MANIFEST = 5,
+        DEPRESSION = -1,
+        NEGATIVE_SYMPTOMS = 4)
+)
+
+
+# Создание DAG
+dag <- ggdag::dagify(
+  EXTRAPYRAMIDAL_SYMPTOMS ~  ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA + DEPRESSION + NEGATIVE_SYMPTOMS,
+  COGNITIVE_FUNCTIONS ~ EXTRAPYRAMIDAL_SYMPTOMS + EXTRAPYRAMIDAL_SYMPTOMS + ANTIPSYCHOTICS + TGF + SCHIZOPHRENIA + EDUCATION + GENDER + AGE + SMOKING, 
+  EXTRAPYRAMIDAL_SYMPTOMS ~ DEPRESSION + ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA,
+  NEGATIVE_SYMPTOMS ~ DEPRESSION + EXTRAPYRAMIDAL_SYMPTOMS,
+  DEPRESSION ~ NEGATIVE_SYMPTOMS + EXTRAPYRAMIDAL_SYMPTOMS,
+  exposure = "EXTRAPYRAMIDAL_SYMPTOMS",
+  outcome = "COGNITIVE_FUNCTIONS",
+  coords = coords
+)
+
+
+
+# Визуализация DAG с ggplot2
+ggdag(dag, text_size = 2) +
+  theme_dag() +
+  theme_minimal()
+  
+
+```
+
+```{r}
+adjustmentSets(dag)
+```
+
+```{r}
+impliedConditionalIndependencies(dag)
+```
+Можно рисовать онлайн https://dagitty.net/dags.html
+
+
+
