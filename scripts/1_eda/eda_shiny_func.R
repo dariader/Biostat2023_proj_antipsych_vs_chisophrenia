@@ -30,7 +30,7 @@ eda_shiny <- function(data) {
                selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
                checkboxInput("split_by_visit_num", "Разбить по 'visit'", value = FALSE),
                radioButtons("plot_type", "Выберите тип графика:",
-                            choices = c("Гистограмма" = "histogram", "Плотность" = "density"),
+                            choices = c("Гистограмма" = "histogram", "Плотность" = "density", "Боксплот" = "boxplot"),
                             selected = "histogram"),
                plotOutput("num_plot")
       ),
@@ -81,6 +81,8 @@ eda_shiny <- function(data) {
         gg <- gg + geom_histogram(fill = "skyblue", bins = 10)
       } else if (plot_type == "density") {
         gg <- gg + geom_density(fill = "skyblue")
+      } else if (plot_type == "boxplot") {
+        gg <- gg + geom_boxplot(fill = "skyblue") + coord_flip()
       }
       
       if (split_by_visit_num) {
