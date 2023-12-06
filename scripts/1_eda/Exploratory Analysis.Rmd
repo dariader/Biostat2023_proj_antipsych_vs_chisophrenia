@@ -6,11 +6,21 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# Список библиотек для установки, если их нет
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra")
+
+# Проверка и установка библиотек
+for (library_name in libraries_to_install) {
+  if (!requireNamespace(library_name, quietly = TRUE)) {
+    install.packages(library_name, dependencies = TRUE)
+  }
+}
 library(tidyverse)
 library(ggplot2)
 library(writexl)
 library(openxlsx)
 library(shiny)
+library(kableExtra)
 # установление рабочей директории
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #setwd(getSrcDirectory(function(x) {x}))
@@ -53,7 +63,6 @@ factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose",
                     "course", "education", "smoke", "antipsychotic generation")
 
 data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
-
 
 #data_filtered %>% glimpse
 ```
@@ -299,8 +308,6 @@ test_results <- lapply(selected_variables, function(variable) {
     pull(variable)
   test_result <- t.test(visit_1, visit_2, paired=TRUE)
   
-
-  
   # Собираем результаты в data frame
   result_df <- data.frame(
     Variable = variable,
@@ -333,8 +340,9 @@ wilcoxon_test_result <- bind_rows(wilcoxon_test_result)
 test_results <- left_join(test_results, wilcoxon_test_result, by = "Variable")
 
 # Выводим результаты
-test_results
-
+test_results %>% 
+  kable(format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 
 
@@ -344,7 +352,9 @@ test_results
 significant_variables <- test_results %>% 
   filter(t_significant_flag == 1 | wilcoxon_significant_flag == 1)
 significant_variables %>% 
-  select(Variable, t_significant_flag, wilcoxon_significant_flag, normality_result)
+  select(Variable, t_significant_flag, wilcoxon_significant_flag, normality_result) %>% 
+  kable(format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 
 Построим боксплоты для значимых переменных со значимыми различиями между визитами.
@@ -367,6 +377,7 @@ for (variable in significant_variables$Variable) {
 selected_variables <- data_filtered %>%
   select_if(is.numeric) %>% 
   names()
+
 # переменные которые не нужно вычитать
 add_df <- data_filtered %>% 
   filter(visit == 1) %>% 
@@ -382,7 +393,7 @@ difference_df <- data_filtered %>%
          `THF dose` = add_df$`THF dose`, 
          CPZE = add_df$CPZE
          ) %>% 
-  rename_with(~paste0(., "_dif"), -c(id, age, `disease duration`, `THF dose`, CPZE))  # Добавляем суффикс "_dif" к именам столбцов с разницей
+  rename_with(~paste0(., "_dif"), -c(id, age, `disease duration`, `THF dose`, CPZE))  # Добавляем суффикс "_dif" 
 difference_df
 ```
 
@@ -430,7 +441,8 @@ lm(`Comp Z_dif` ~ `Total score SAS_dif`, data=difference_df) %>%
 ```{r}
 # уберем линейно зависимые переменные
 selected_data <- difference_df %>% 
-  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'))
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'))
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
   summary()
 ```
@@ -439,22 +451,27 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %>%
 Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
 ```{r}
 selected_data <- difference_df %>% 
-  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z')) %>% 
-  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z')) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
   step(na.action = na.omit) %>% 
   summary()
 ```
 Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
 
-Теперь используем 5-факторную модель PANSS. Построим panel linear model.
+Теперь используем 5-факторную модель PANSS.
 Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
 ```{r}
 selected_data <- difference_df %>% 
   select(-id, -starts_with(c("N", "P", "G", "Z")), negative_dif, positive_dif, CPZE) %>% 
-  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, 
+         -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+
 lm(`Comp Z_dif` ~ ., data = selected_data) %>% 
   step() %>% 
   summary()
