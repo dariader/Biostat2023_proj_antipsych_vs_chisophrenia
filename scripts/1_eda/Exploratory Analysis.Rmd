@@ -367,19 +367,30 @@ for (variable in significant_variables$Variable) {
 selected_variables <- data_filtered %>%
   select_if(is.numeric) %>% 
   names()
+# переменные которые не нужно вычитать
+add_df <- data_filtered %>% 
+  filter(visit == 1) %>% 
+  select(id, age, `disease duration`, `THF dose`, CPZE)
 
 # Создаем новый датафрейм для хранения разницы
 difference_df <- data_filtered %>%
   select(id, visit, all_of(selected_variables)) %>%
   group_by(id) %>%
-  summarise(across(selected_variables, ~diff(.)))
+  summarise(across(selected_variables, ~diff(.))) %>% 
+  mutate(age = add_df$age,
+         `disease duration` = add_df$`disease duration`,
+         `THF dose` = add_df$`THF dose`, 
+         CPZE = add_df$CPZE
+         ) %>% 
+  rename_with(~paste0(., "_dif"), -c(id, age, `disease duration`, `THF dose`, CPZE))  # Добавляем суффикс "_dif" к именам столбцов с разницей
 difference_df
 ```
+
 
 Как лучше визуализировать? может быть так:
 
 ```{r}
-ggplot(difference_df, aes(x = id, y = `Total score SAS`)) +
+ggplot(difference_df, aes(x = id, y = `Total score SAS_dif`)) +
   geom_point() +
   labs(title = "Относительная разница между визитами", x = "ID", y = 'gait') + 
   theme_minimal()
@@ -387,7 +398,7 @@ ggplot(difference_df, aes(x = id, y = `Total score SAS`)) +
 Или вот так:
 
 ```{r}
-ggplot(difference_df, aes(x = `Total score SAS`)) +
+ggplot(difference_df, aes(x = `Total score SAS_dif`)) +
   geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
   labs(title = "Гистограмма относительной разницы между визитами Total score SAS", x = "Значение переменной", y = "Частота") + 
   theme_minimal()
@@ -396,10 +407,60 @@ ggplot(difference_df, aes(x = `Total score SAS`)) +
 А может быть shiny прикрутить, для всего этого?
 Доступна только вкладка "Числовые переменные" без разбития по visit.
 ```{r eval=FALSE}
+source("../../scripts/1_eda/eda_shiny_func.R")
 eda_shiny(difference_df)
 ```
 
 Или что то другое...
+
+## Строим модель
+
+Простая модель, включающая только `Total score SAS_dif`, `Total score PANSS_dif`. Предсказываем  `Comp Z_dif`
+
+```{r}
+lm(`Comp Z_dif` ~ `Total score SAS_dif` + `Total score PANSS_dif`, data=difference_df) %>% 
+  summary()
+```
+Модель получается лучше, если оставить только `Total score SAS_dif`
+```{r}
+lm(`Comp Z_dif` ~ `Total score SAS_dif`, data=difference_df) %>% 
+  summary()
+```
+Теперь попробуем построить сложную модель, пусть функция step разбирается.
+```{r}
+# уберем линейно зависимые переменные
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'))
+lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
+  summary()
+```
+Исключим так же `Verbal Memory`, `Digit Sequencing`, `Token Motor Task`, `Verbal Fluency`, `Symbol Coding`, `Tower of London`.
+
+Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z')) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
+  step(na.action = na.omit) %>% 
+  summary()
+```
+Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
+
+Теперь используем 5-факторную модель PANSS. Построим panel linear model.
+Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -starts_with(c("N", "P", "G", "Z")), negative_dif, positive_dif, CPZE) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+lm(`Comp Z_dif` ~ ., data = selected_data) %>% 
+  step() %>% 
+  summary()
+```
+Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:  0.4149,	Adjusted R-squared:  0.3109).
+
 
 
 
