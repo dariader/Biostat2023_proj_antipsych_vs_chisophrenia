@@ -3882,7 +3882,7 @@ step())</p>
   mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
 
 lm(`Comp Z_dif` ~ ., data=selected_data) %&gt;% 
-  step(na.action = na.omit) %&gt;% 
+  step() %&gt;% 
   summary()</code></pre>
 <pre><code>## Start:  AIC=191.74
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `arm dropping_dif` + 
@@ -4408,6 +4408,873 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;%
 ## F-statistic: 3.989 on 8 and 45 DF,  p-value: 0.001216</code></pre>
 <p>Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:
 0.4149, Adjusted R-squared: 0.3109).</p>
+<p>Эта же модель с подробным описанием.</p>
+<pre class="r"><code>model &lt;- lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
+     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data)
+tidy_results &lt;- tidy(model)
+glance_results &lt;- glance(model) %&gt;% 
+  select(r.squared, adj.r.squared, sigma, logLik, AIC, BIC, df.residual, nobs)
+results &lt;- bind_cols(tidy_results, glance_results)
+results %&gt;%
+  kable(&quot;html&quot;) %&gt;%
+  kable_styling(&quot;striped&quot;, full_width = FALSE)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+term
+</th>
+<th style="text-align:right;">
+estimate
+</th>
+<th style="text-align:right;">
+std.error
+</th>
+<th style="text-align:right;">
+statistic
+</th>
+<th style="text-align:right;">
+p.value
+</th>
+<th style="text-align:right;">
+r.squared
+</th>
+<th style="text-align:right;">
+adj.r.squared
+</th>
+<th style="text-align:right;">
+sigma
+</th>
+<th style="text-align:right;">
+logLik
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+BIC
+</th>
+<th style="text-align:right;">
+df.residual
+</th>
+<th style="text-align:right;">
+nobs
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+2.0608817
+</td>
+<td style="text-align:right;">
+1.9454580
+</td>
+<td style="text-align:right;">
+1.059330
+</td>
+<td style="text-align:right;">
+0.2951027
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>shoulder shaking_dif</code>
+</td>
+<td style="text-align:right;">
+3.4827813
+</td>
+<td style="text-align:right;">
+1.3864224
+</td>
+<td style="text-align:right;">
+2.512064
+</td>
+<td style="text-align:right;">
+0.0156576
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>elbow rigidity_dif</code>
+</td>
+<td style="text-align:right;">
+-2.9102889
+</td>
+<td style="text-align:right;">
+1.3731599
+</td>
+<td style="text-align:right;">
+-2.119410
+</td>
+<td style="text-align:right;">
+0.0396065
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>wrist rigidity_dif</code>
+</td>
+<td style="text-align:right;">
+-7.1531656
+</td>
+<td style="text-align:right;">
+3.6139529
+</td>
+<td style="text-align:right;">
+-1.979319
+</td>
+<td style="text-align:right;">
+0.0539177
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+salivation_dif
+</td>
+<td style="text-align:right;">
+2.9767882
+</td>
+<td style="text-align:right;">
+1.3215104
+</td>
+<td style="text-align:right;">
+2.252565
+</td>
+<td style="text-align:right;">
+0.0292103
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>Total score SAS_dif</code>
+</td>
+<td style="text-align:right;">
+-1.0402542
+</td>
+<td style="text-align:right;">
+0.4134768
+</td>
+<td style="text-align:right;">
+-2.515871
+</td>
+<td style="text-align:right;">
+0.0155106
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>Total score PANSS_dif</code>
+</td>
+<td style="text-align:right;">
+-0.3558301
+</td>
+<td style="text-align:right;">
+0.1391239
+</td>
+<td style="text-align:right;">
+-2.557650
+</td>
+<td style="text-align:right;">
+0.0139776
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+cognitive_dif
+</td>
+<td style="text-align:right;">
+1.1200943
+</td>
+<td style="text-align:right;">
+0.4039965
+</td>
+<td style="text-align:right;">
+2.772535
+</td>
+<td style="text-align:right;">
+0.0080633
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+depression_dif
+</td>
+<td style="text-align:right;">
+1.0273603
+</td>
+<td style="text-align:right;">
+0.3527902
+</td>
+<td style="text-align:right;">
+2.912100
+</td>
+<td style="text-align:right;">
+0.0055691
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code> model &lt;- lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
+      `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data)
+
+tidy_results &lt;- tidy(model)
+glance_results &lt;- glance(model) %&gt;% 
+  select(r.squared, adj.r.squared, sigma, logLik, AIC, BIC, df.residual, nobs)
+
+# Добавьте столбец с форматированными p-values
+tidy_results &lt;- tidy_results %&gt;%
+  mutate(p.value = ifelse(p.value &lt; 0.05, cell_spec(sprintf(&quot;%.3e&quot;, p.value), &quot;html&quot;, color = &quot;red&quot;, bold = TRUE), sprintf(&quot;%.3e&quot;, p.value)))
+
+# Соберите все результаты в один dataframe
+results &lt;- bind_cols(tidy_results, glance_results)
+
+# Выведите красивую таблицу с результатами
+results %&gt;%
+  kable(&quot;html&quot;) %&gt;%
+  kable_styling(&quot;striped&quot;, full_width = FALSE)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+term
+</th>
+<th style="text-align:right;">
+estimate
+</th>
+<th style="text-align:right;">
+std.error
+</th>
+<th style="text-align:right;">
+statistic
+</th>
+<th style="text-align:left;">
+p.value
+</th>
+<th style="text-align:right;">
+r.squared
+</th>
+<th style="text-align:right;">
+adj.r.squared
+</th>
+<th style="text-align:right;">
+sigma
+</th>
+<th style="text-align:right;">
+logLik
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+BIC
+</th>
+<th style="text-align:right;">
+df.residual
+</th>
+<th style="text-align:right;">
+nobs
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+(Intercept)
+</td>
+<td style="text-align:right;">
+2.0608817
+</td>
+<td style="text-align:right;">
+1.9454580
+</td>
+<td style="text-align:right;">
+1.059330
+</td>
+<td style="text-align:left;">
+2.951e-01
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>shoulder shaking_dif</code>
+</td>
+<td style="text-align:right;">
+3.4827813
+</td>
+<td style="text-align:right;">
+1.3864224
+</td>
+<td style="text-align:right;">
+2.512064
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;1.566e-02&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>elbow rigidity_dif</code>
+</td>
+<td style="text-align:right;">
+-2.9102889
+</td>
+<td style="text-align:right;">
+1.3731599
+</td>
+<td style="text-align:right;">
+-2.119410
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;3.961e-02&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>wrist rigidity_dif</code>
+</td>
+<td style="text-align:right;">
+-7.1531656
+</td>
+<td style="text-align:right;">
+3.6139529
+</td>
+<td style="text-align:right;">
+-1.979319
+</td>
+<td style="text-align:left;">
+5.392e-02
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+salivation_dif
+</td>
+<td style="text-align:right;">
+2.9767882
+</td>
+<td style="text-align:right;">
+1.3215104
+</td>
+<td style="text-align:right;">
+2.252565
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;2.921e-02&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>Total score SAS_dif</code>
+</td>
+<td style="text-align:right;">
+-1.0402542
+</td>
+<td style="text-align:right;">
+0.4134768
+</td>
+<td style="text-align:right;">
+-2.515871
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;1.551e-02&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<code>Total score PANSS_dif</code>
+</td>
+<td style="text-align:right;">
+-0.3558301
+</td>
+<td style="text-align:right;">
+0.1391239
+</td>
+<td style="text-align:right;">
+-2.557650
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;1.398e-02&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+cognitive_dif
+</td>
+<td style="text-align:right;">
+1.1200943
+</td>
+<td style="text-align:right;">
+0.4039965
+</td>
+<td style="text-align:right;">
+2.772535
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;8.063e-03&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+depression_dif
+</td>
+<td style="text-align:right;">
+1.0273603
+</td>
+<td style="text-align:right;">
+0.3527902
+</td>
+<td style="text-align:right;">
+2.912100
+</td>
+<td style="text-align:left;">
+&lt;span style=” font-weight: bold; color: red !important;”
+&gt;5.569e-03&lt;/span&gt;
+</td>
+<td style="text-align:right;">
+0.4149128
+</td>
+<td style="text-align:right;">
+0.3108973
+</td>
+<td style="text-align:right;">
+4.51205
+</td>
+<td style="text-align:right;">
+-153.0646
+</td>
+<td style="text-align:right;">
+326.1292
+</td>
+<td style="text-align:right;">
+346.019
+</td>
+<td style="text-align:right;">
+45
+</td>
+<td style="text-align:right;">
+54
+</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 

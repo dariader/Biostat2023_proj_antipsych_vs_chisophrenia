@@ -7,7 +7,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -21,6 +21,7 @@ library(writexl)
 library(openxlsx)
 library(shiny)
 library(kableExtra)
+library(broom)
 # установление рабочей директории
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #setwd(getSrcDirectory(function(x) {x}))
@@ -458,7 +459,7 @@ selected_data <- difference_df %>%
   mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
 
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
-  step(na.action = na.omit) %>% 
+  step() %>% 
   summary()
 ```
 Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
@@ -478,9 +479,18 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %>%
 ```
 Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:  0.4149,	Adjusted R-squared:  0.3109).
 
-
-
-
+Эта же модель с подробным описанием.
+```{r}
+model <- lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
+     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data)
+tidy_results <- tidy(model)
+glance_results <- glance(model) %>% 
+  select(r.squared, adj.r.squared, sigma, logLik, AIC, BIC, df.residual, nobs)
+results <- bind_cols(tidy_results, glance_results)
+results %>%
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
+```
 
 
 
