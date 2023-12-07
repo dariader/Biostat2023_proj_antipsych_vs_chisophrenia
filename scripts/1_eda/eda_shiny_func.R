@@ -130,20 +130,28 @@ eda_shiny <- function(data) {
         geom_smooth(method="lm", col = 'black') +
         labs(title = paste("Scatterplot для", x_variable, "и", y_variable)) +
         theme_minimal()
-      
-      if (split_by_visit_scatter) {
-        gg <- gg + facet_wrap(~visit)
-      }
-      
-      correlation_coefficient <- cor(data[[x_variable]], data[[y_variable]])
       x_center <- mean(range(data[[x_variable]]))
       y_center <- mean(range(data[[y_variable]]))
-      gg <- gg + annotate("text", x = x_center, y = y_center,
-                          label = paste("r:", round(correlation_coefficient, 2)),
-                          hjust = 0.5, vjust = 1, size = 6)
+      
+      if (split_by_visit_scatter) {
+        gg <- gg + facet_wrap(~visit) +
+          facet_grid(~visit) +
+          geom_text(data = data %>% group_by(visit) %>% summarize(cor = cor(!!as.symbol(x_variable), !!as.symbol(y_variable))),
+                    aes(label = paste("r: ", round(cor, 2))),
+                    x = x_center, y = y_center, hjust = 0.5, vjust = 0.5, size = 8)
+      } else {
+        correlation_coefficient <- cor(data[[x_variable]], data[[y_variable]])
+        gg <- gg + annotate("text", x = x_center, y = y_center,
+                            label = paste("r: ", round(correlation_coefficient, 2)),
+                            hjust = 0.5, vjust = 0.5, size = 8)
+      }
       
       print(gg)
     })
+    
+    
+    
+    
     
     output$corr <- renderPlotly({
       data_num <- data[,c(numeric_columns,factor_columns)]
