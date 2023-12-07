@@ -8,7 +8,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -24,15 +24,18 @@ library(openxlsx)
 library(shiny)
 library(kableExtra)
 library(broom)
+library(here)
 ```
 
 ## EDA
 
 ```{r}
-data <- readxl::read_xlsx('../../data/Data_SAS.xlsx', sheet = 2)
+path <- here("data", "Data_SAS.xlsx")
+data <- readxl::read_xlsx(path, sheet = 2)
 #data %>% glimpse()
 #data %>% summary()
 ```
+
 
 
 ## Приводим данные к нужному виду
@@ -256,8 +259,10 @@ print(differences_Comp_Z[, c("id", "Comp Z", "Comp_Z_auto")])
 - Создает Data_SAS_fixed.xlsx в _misc.
 
 ```{r}
-source("../../scripts/0_preprocessing/preprocessing.R")
-data_filtered <- preprocessing("../../data/Data_SAS.xlsx")
+path <- here("scripts/0_preprocessing", "preprocessing.R")
+source(path)
+path <- here("data", "Data_SAS.xlsx")
+data_filtered <- preprocessing(path)
 ```
 
 ## EDA - исправленные данные
@@ -271,7 +276,8 @@ data_filtered %>%
 EDA с помощью Shiny
 
 ```{r eval=FALSE}
-source("../../scripts/1_eda/eda_shiny_func.R")
+path <- here("scripts/1_eda", "eda_shiny_func.R")
+source(path)
 eda_shiny(data_filtered)
 ```
 # Динамика
@@ -414,7 +420,8 @@ ggplot(difference_df, aes(x = `Total score SAS_dif`)) +
 А может быть shiny прикрутить, для всего этого?
 Доступна только вкладка "Числовые переменные" без разбития по visit.
 ```{r eval=FALSE}
-source("../../scripts/1_eda/eda_shiny_func.R")
+path <- here("scripts/1_eda", "eda_shiny_func.R")
+source(path)
 eda_shiny(difference_df)
 ```
 
