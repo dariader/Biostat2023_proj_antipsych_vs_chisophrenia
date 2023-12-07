@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-12-07" />
+<meta name="date" content="2023-12-08" />
 
 <title>EDA</title>
 
@@ -574,7 +574,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">EDA</h1>
-<h4 class="date">2023-12-07</h4>
+<h4 class="date">2023-12-08</h4>
 
 </div>
 
@@ -938,9 +938,85 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
 <div id="eda---исправленные-данные" class="section level2">
 <h2>EDA - исправленные данные</h2>
 <pre class="r"><code>data_filtered %&gt;% 
-  glimpse()</code></pre>
-<pre class="r"><code>#data_filtered %&gt;% 
-# summary()</code></pre>
+ glimpse()</code></pre>
+<pre><code>## Rows: 108
+## Columns: 76
+## $ id                              &lt;chr&gt; &quot;А1&quot;, &quot;А2&quot;, &quot;А3&quot;, &quot;А4&quot;, &quot;А5&quot;, &quot;А6&quot;, &quot;А…
+## $ gender                          &lt;fct&gt; м, м, ж, м, ж, м, ж, м, м, ж, м, ж, ж,…
+## $ age                             &lt;dbl&gt; 33, 20, 18, 21, 40, 19, 22, 24, 27, 27…
+## $ `disease duration`              &lt;dbl&gt; 5, 9, 4, 8, 9, 7, 8, 4, 11, 9, 3, 7, 9…
+## $ antipsychotic                   &lt;fct&gt; рисперидон, рисперидон, арипипразол, а…
+## $ `antipsychotic dose`            &lt;fct&gt; 6, 6, 20, 10, 30, 15, 400, 30, 4, 20, …
+## $ `antipsychotic generation`      &lt;fct&gt; 2, 2, 3, 3, 1, 3, 2, 1, 2, 1, 3, 2, 2,…
+## $ `THF dose`                      &lt;dbl&gt; 0, 6, 4, 0, 6, 4, 2, 4, 4, 4, 2, 0, 4,…
+## $ course                          &lt;fct&gt; непрерывный, непрерывный, эпизодически…
+## $ education                       &lt;fct&gt; незаконченное высшее, среднее професси…
+## $ smoke                           &lt;fct&gt; 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ visit                           &lt;fct&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,…
+## $ gait                            &lt;dbl&gt; 0, 4, 0, 0, 2, 3, 0, 1, 0, 0, 1, 0, 3,…
+## $ `arm dropping`                  &lt;dbl&gt; 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1,…
+## $ `shoulder shaking`              &lt;dbl&gt; 1, 1, 1, 1, 1, 2, 1, 3, 1, 1, 2, 0, 2,…
+## $ `elbow rigidity`                &lt;dbl&gt; 1, 1, 1, 0, 2, 3, 1, 3, 0, 0, 1, 1, 3,…
+## $ `wrist rigidity`                &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,…
+## $ `head rotation`                 &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,…
+## $ `glabella tap`                  &lt;dbl&gt; 0, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 1, 0,…
+## $ tremor                          &lt;dbl&gt; 0, 2, 1, 2, 2, 3, 2, 1, 0, 0, 0, 0, 1,…
+## $ salivation                      &lt;dbl&gt; 0, 1, 0, 1, 2, 0, 1, 1, 1, 1, 1, 0, 2,…
+## $ akathisia                       &lt;dbl&gt; 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,…
+## $ `Total score SAS`               &lt;dbl&gt; 2, 9, 4, 4, 12, 12, 5, 11, 4, 2, 6, 2,…
+## $ P1                              &lt;dbl&gt; 3, 5, 4, 2, 5, 3, 2, 2, 4, 3, 3, 3, 2,…
+## $ P2                              &lt;dbl&gt; 3, 6, 2, 4, 4, 3, 3, 2, 4, 3, 2, 3, 5,…
+## $ P3                              &lt;dbl&gt; 3, 6, 6, 2, 5, 2, 2, 1, 3, 3, 2, 1, 2,…
+## $ P4                              &lt;dbl&gt; 5, 4, 3, 1, 4, 2, 3, 3, 3, 2, 2, 2, 4,…
+## $ P5                              &lt;dbl&gt; 2, 3, 3, 2, 2, 1, 1, 2, 2, 1, 1, 2, 2,…
+## $ P6                              &lt;dbl&gt; 5, 4, 5, 3, 5, 3, 2, 2, 3, 3, 2, 3, 2,…
+## $ P7                              &lt;dbl&gt; 6, 4, 2, 2, 2, 2, 3, 2, 3, 2, 2, 1, 2,…
+## $ `Positive scale`                &lt;dbl&gt; 27, 32, 25, 16, 27, 16, 16, 14, 22, 17…
+## $ N1                              &lt;dbl&gt; 5, 4, 5, 3, 3, 3, 2, 3, 2, 2, 3, 3, 4,…
+## $ N2                              &lt;dbl&gt; 5, 4, 4, 3, 4, 4, 3, 3, 3, 3, 3, 4, 4,…
+## $ N3                              &lt;dbl&gt; 5, 4, 4, 2, 2, 2, 3, 3, 2, 2, 2, 3, 4,…
+## $ N4                              &lt;dbl&gt; 6, 3, 6, 4, 3, 3, 4, 3, 3, 3, 3, 4, 4,…
+## $ N5                              &lt;dbl&gt; 4, 4, 2, 4, 4, 3, 3, 4, 3, 3, 4, 3, 3,…
+## $ N6                              &lt;dbl&gt; 5, 4, 4, 3, 4, 2, 3, 3, 3, 2, 2, 4, 4,…
+## $ N7                              &lt;dbl&gt; 2, 5, 2, 2, 4, 3, 2, 3, 2, 2, 2, 3, 2,…
+## $ `Negative scale`                &lt;dbl&gt; 32, 28, 27, 21, 24, 20, 20, 22, 18, 17…
+## $ G1                              &lt;dbl&gt; 2, 3, 4, 2, 3, 2, 3, 2, 2, 2, 2, 1, 2,…
+## $ G2                              &lt;dbl&gt; 5, 3, 5, 3, 5, 4, 3, 3, 3, 3, 3, 2, 4,…
+## $ G3                              &lt;dbl&gt; 2, 2, 4, 2, 3, 2, 3, 2, 2, 1, 1, 2, 2,…
+## $ G4                              &lt;dbl&gt; 5, 4, 5, 3, 6, 3, 3, 3, 2, 2, 2, 2, 4,…
+## $ G5                              &lt;dbl&gt; 4, 5, 4, 2, 3, 2, 3, 3, 2, 1, 1, 3, 4,…
+## $ G6                              &lt;dbl&gt; 3, 2, 5, 4, 4, 3, 3, 3, 3, 3, 2, 2, 6,…
+## $ G7                              &lt;dbl&gt; 2, 2, 4, 3, 3, 2, 3, 3, 3, 2, 2, 3, 2,…
+## $ G8                              &lt;dbl&gt; 5, 4, 2, 2, 2, 1, 2, 3, 2, 2, 2, 2, 2,…
+## $ G9                              &lt;dbl&gt; 2, 5, 4, 2, 5, 3, 3, 2, 4, 3, 4, 3, 2,…
+## $ G10                             &lt;dbl&gt; 2, 3, 2, 1, 2, 1, 1, 1, 2, 1, 1, 3, 2,…
+## $ G11                             &lt;dbl&gt; 3, 5, 4, 3, 4, 3, 3, 3, 3, 3, 3, 3, 4,…
+## $ G12                             &lt;dbl&gt; 6, 6, 2, 2, 5, 2, 2, 2, 2, 2, 2, 4, 4,…
+## $ G13                             &lt;dbl&gt; 5, 5, 3, 3, 4, 2, 2, 3, 3, 3, 3, 3, 4,…
+## $ G14                             &lt;dbl&gt; 5, 4, 2, 2, 3, 3, 4, 4, 3, 2, 2, 2, 3,…
+## $ G15                             &lt;dbl&gt; 5, 5, 5, 2, 4, 2, 2, 2, 2, 2, 2, 3, 4,…
+## $ G16                             &lt;dbl&gt; 5, 4, 6, 4, 3, 3, 4, 3, 3, 3, 3, 3, 5,…
+## $ `General Psychopathology scale` &lt;dbl&gt; 61, 62, 61, 40, 59, 38, 44, 42, 41, 35…
+## $ `Total score PANSS`             &lt;dbl&gt; 120, 122, 113, 77, 110, 74, 80, 78, 81…
+## $ `Verbal Memory`                 &lt;dbl&gt; 33, 41, 48, 34, 33, 44, 40, 52, 41, 48…
+## $ ZVM                             &lt;dbl&gt; -2.21, -1.20, -0.32, -2.19, -2.20, -0.…
+## $ `Digit Sequencing`              &lt;dbl&gt; 11, 18, 15, 16, 18, 19, 12, 18, 16, 25…
+## $ ZDS                             &lt;dbl&gt; -3.33, -1.48, -1.50, -2.26, -0.73, -1.…
+## $ `Token Motor Task`              &lt;dbl&gt; 70, 69, 56, 78, 62, 62, 72, 58, 69, 60…
+## $ ZMT                             &lt;dbl&gt; -0.12, -0.65, -1.34, 0.37, -0.76, -1.4…
+## $ `Verbal Fluency`                &lt;dbl&gt; 30, 43, 60, 46, 63, 55, 32, 36, 44, 65…
+## $ ZVF                             &lt;dbl&gt; -1.89, -1.63, 0.36, -1.31, 0.45, -0.36…
+## $ `Symbol Coding`                 &lt;dbl&gt; 33, 56, 67, 48, 46, 60, 50, 49, 61, 43…
+## $ ZSC                             &lt;dbl&gt; -2.63, -0.74, 0.21, -1.73, -1.51, -0.2…
+## $ `Tower of London`               &lt;dbl&gt; 11, 18, 22, 18, 18, 21, 18, 17, 18, 18…
+## $ ZToL                            &lt;dbl&gt; -4.85, -0.25, 2.24, -0.25, 0.34, 1.40,…
+## $ `Comp Z`                        &lt;dbl&gt; 35.35, 50.01, 55.47, 50.16, 51.16, 54.…
+## $ negative                        &lt;dbl&gt; 31, 23, 29, 19, 19, 17, 19, 18, 16, 15…
+## $ excitment                       &lt;dbl&gt; 21, 16, 12, 8, 15, 10, 13, 12, 11, 8, …
+## $ cognitive                       &lt;dbl&gt; 16, 23, 14, 14, 17, 12, 13, 13, 14, 11…
+## $ positive                        &lt;dbl&gt; 12, 17, 16, 9, 17, 10, 8, 8, 13, 10, 1…
+## $ depression                      &lt;dbl&gt; 17, 15, 23, 13, 19, 13, 14, 12, 12, 11…
+## $ CPZE                            &lt;dbl&gt; 3.59, 3.59, 4.00, 2.00, 11.24, 3.00, 3…</code></pre>
 <p>EDA с помощью Shiny</p>
 <pre class="r"><code>source(&quot;../../scripts/1_eda/eda_shiny_func.R&quot;)
 eda_shiny(data_filtered)</code></pre>
@@ -1000,10 +1076,9 @@ wilcoxon_test_result &lt;- lapply(selected_variables, function(variable) {
     wilcoxon_significant_flag = ifelse(wilcoxon_result$p.value &lt; alpha, &quot;1&quot;, &quot;0&quot;)
   )
   return(result_df)
-})</code></pre>
-<pre><code>## Warning in wilcox.test.default(x = DATA[[1L]], y = DATA[[2L]], ...): не могу
-## подсчитать точное p-значение при наличии повторяющихся наблюдений</code></pre>
-<pre class="r"><code># Объединяем результаты Уилкоксона с предыдущими результатами
+})
+
+# Объединяем результаты Уилкоксона с предыдущими результатами
 wilcoxon_test_result &lt;- bind_rows(wilcoxon_test_result)
 test_results &lt;- left_join(test_results, wilcoxon_test_result, by = &quot;Variable&quot;)
 
@@ -2978,7 +3053,7 @@ NA
 Not normal
 </td>
 <td style="text-align:right;">
-1152.0
+1458.0
 </td>
 <td style="text-align:right;">
 1.0000000
@@ -3835,175 +3910,173 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %&gt;%
 ## lm(formula = `Comp Z_dif` ~ ., data = selected_data)
 ## 
 ## Residuals:
-##       Min        1Q    Median        3Q       Max 
-## -0.150268 -0.049645  0.002253  0.064858  0.134852 
+##      Min       1Q   Median       3Q      Max 
+## -0.21109 -0.05983  0.00441  0.05982  0.14870 
 ## 
-## Coefficients: (1 not defined because of singularities)
+## Coefficients:
 ##                           Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)             -0.0994336  0.0893888  -1.112   0.2754    
-## age                      0.0053188  0.0028384   1.874   0.0714 .  
-## `disease duration`      -0.0055340  0.0034642  -1.598   0.1214    
-## `THF dose`              -0.0003888  0.0068523  -0.057   0.9552    
-## `arm dropping_dif`       0.0743878  0.0632461   1.176   0.2494    
-## `shoulder shaking_dif`  -0.1134952  0.0524303  -2.165   0.0391 *  
-## `elbow rigidity_dif`     0.0454572  0.0530334   0.857   0.3986    
-## `wrist rigidity_dif`            NA         NA      NA       NA    
-## `head rotation_dif`      0.0179367  0.0567513   0.316   0.7543    
-## tremor_dif               0.0220192  0.0432478   0.509   0.6146    
-## salivation_dif          -0.0535698  0.0524844  -1.021   0.3161    
-## akathisia_dif           -0.0780609  0.0385968  -2.022   0.0528 .  
-## `Total score SAS_dif`    0.0200066  0.0285384   0.701   0.4891    
-## `Total score PANSS_dif`  0.0015377  0.0024502   0.628   0.5354    
-## `Verbal Memory_dif`      0.0343903  0.0026567  12.945 2.44e-13 ***
-## `Digit Sequencing_dif`   0.3415966  0.0056372  60.596  &lt; 2e-16 ***
-## `Token Motor Task_dif`   0.2803792  0.0021248 131.959  &lt; 2e-16 ***
-## `Verbal Fluency_dif`     0.2687599  0.0034560  77.766  &lt; 2e-16 ***
-## `Symbol Coding_dif`      0.2909222  0.0024562 118.446  &lt; 2e-16 ***
-## `Tower of London_dif`    0.3759772  0.0071359  52.688  &lt; 2e-16 ***
-## CPZE                     0.0034883  0.0061849   0.564   0.5772    
+## (Intercept)              3.328e-02  8.025e-02   0.415    0.681    
+## age                      1.962e-04  2.296e-03   0.085    0.932    
+## `disease duration`      -1.239e-03  3.216e-03  -0.385    0.702    
+## `THF dose`              -4.197e-03  6.938e-03  -0.605    0.549    
+## `arm dropping_dif`      -1.590e-03  5.794e-02  -0.027    0.978    
+## `shoulder shaking_dif`  -2.726e-02  4.378e-02  -0.623    0.538    
+## `elbow rigidity_dif`     4.184e-02  4.830e-02   0.866    0.393    
+## `wrist rigidity_dif`     1.280e-01  8.556e-02   1.496    0.144    
+## `head rotation_dif`      2.443e-02  5.940e-02   0.411    0.683    
+## tremor_dif               1.321e-02  4.475e-02   0.295    0.770    
+## salivation_dif          -1.929e-02  5.088e-02  -0.379    0.707    
+## akathisia_dif           -4.996e-02  3.722e-02  -1.342    0.189    
+## `Total score SAS_dif`   -8.081e-06  2.851e-02   0.000    1.000    
+## `Total score PANSS_dif`  2.182e-03  2.185e-03   0.999    0.325    
+## `Verbal Memory_dif`      3.487e-02  2.698e-03  12.925 1.83e-14 ***
+## `Digit Sequencing_dif`   3.396e-01  5.858e-03  57.973  &lt; 2e-16 ***
+## `Token Motor Task_dif`   2.767e-01  1.778e-03 155.653  &lt; 2e-16 ***
+## `Verbal Fluency_dif`     2.723e-01  3.001e-03  90.751  &lt; 2e-16 ***
+## `Symbol Coding_dif`      2.901e-01  2.530e-03 114.667  &lt; 2e-16 ***
+## `Tower of London_dif`    3.804e-01  7.116e-03  53.460  &lt; 2e-16 ***
+## CPZE                     6.218e-03  6.317e-03   0.984    0.332    
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 0.09523 on 28 degrees of freedom
-##   (6 пропущенных наблюдений удалены)
+## Residual standard error: 0.1004 on 33 degrees of freedom
 ## Multiple R-squared:  0.9998, Adjusted R-squared:  0.9997 
-## F-statistic:  8244 on 19 and 28 DF,  p-value: &lt; 2.2e-16</code></pre>
+## F-statistic:  7762 on 20 and 33 DF,  p-value: &lt; 2.2e-16</code></pre>
 <p>Исключим так же <code>Verbal Memory</code>,
 <code>Digit Sequencing</code>, <code>Token Motor Task</code>,
 <code>Verbal Fluency</code>, <code>Symbol Coding</code>,
 <code>Tower of London</code>.</p>
-<p>Заменим пропущенные значения CPZE на среднее (это нужно для работы
-step())</p>
 <pre class="r"><code>selected_data &lt;- difference_df %&gt;% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
          -starts_with(&#39;N&#39;), -starts_with(&#39;P&#39;), -starts_with(&#39;G&#39;), -starts_with(&#39;Z&#39;)) %&gt;% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
-         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %&gt;% 
-  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data=selected_data) %&gt;% 
   step() %&gt;% 
   summary()</code></pre>
-<pre><code>## Start:  AIC=191.74
+<pre><code>## Start:  AIC=191.38
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `arm dropping_dif` + 
 ##     `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + 
 ##     `head rotation_dif` + tremor_dif + salivation_dif + akathisia_dif + 
 ##     `Total score SAS_dif` + `Total score PANSS_dif` + CPZE
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - akathisia_dif            1     0.095 1079.4 189.74
-## - age                      1     0.212 1079.6 189.75
-## - CPZE                     1     1.327 1080.7 189.80
-## - tremor_dif               1     3.745 1083.1 189.92
-## - `arm dropping_dif`       1     4.601 1084.0 189.97
-## - `THF dose`               1    10.781 1090.1 190.27
-## - `disease duration`       1    14.292 1093.6 190.45
-## - `Total score PANSS_dif`  1    14.731 1094.1 190.47
-## - `elbow rigidity_dif`     1    15.581 1094.9 190.51
-## - `head rotation_dif`      1    21.658 1101.0 190.81
-## - `Total score SAS_dif`    1    27.118 1106.5 191.08
-## - `wrist rigidity_dif`     1    33.178 1112.5 191.37
-## &lt;none&gt;                                 1079.3 191.74
-## - `shoulder shaking_dif`   1    60.842 1140.2 192.70
-## - salivation_dif           1    86.379 1165.7 193.89
+## - age                      1     0.118 1072.4 189.39
+## - akathisia_dif            1     0.121 1072.4 189.39
+## - tremor_dif               1     3.052 1075.3 189.53
+## - `arm dropping_dif`       1     5.788 1078.0 189.67
+## - `THF dose`               1     6.213 1078.5 189.69
+## - CPZE                     1     8.411 1080.7 189.80
+## - `Total score PANSS_dif`  1    14.602 1086.9 190.11
+## - `elbow rigidity_dif`     1    15.001 1087.3 190.13
+## - `disease duration`       1    17.839 1090.1 190.27
+## - `head rotation_dif`      1    22.410 1094.7 190.50
+## - `Total score SAS_dif`    1    28.534 1100.8 190.80
+## - `wrist rigidity_dif`     1    32.019 1104.3 190.97
+## &lt;none&gt;                                 1072.3 191.38
+## - `shoulder shaking_dif`   1    61.451 1133.7 192.39
+## - salivation_dif           1    91.569 1163.8 193.81
 ## 
-## Step:  AIC=189.74
-## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `arm dropping_dif` + 
+## Step:  AIC=189.39
+## `Comp Z_dif` ~ `disease duration` + `THF dose` + `arm dropping_dif` + 
 ##     `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + 
-##     `head rotation_dif` + tremor_dif + salivation_dif + `Total score SAS_dif` + 
-##     `Total score PANSS_dif` + CPZE
+##     `head rotation_dif` + tremor_dif + salivation_dif + akathisia_dif + 
+##     `Total score SAS_dif` + `Total score PANSS_dif` + CPZE
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - age                      1     0.206 1079.7 187.75
-## - CPZE                     1     1.291 1080.7 187.81
-## - `arm dropping_dif`       1     5.720 1085.2 188.03
-## - tremor_dif               1     7.483 1086.9 188.12
-## - `THF dose`               1    10.746 1090.2 188.28
-## - `disease duration`       1    14.463 1093.9 188.46
-## - `Total score PANSS_dif`  1    19.566 1099.0 188.71
-## - `head rotation_dif`      1    27.525 1107.0 189.10
-## - `elbow rigidity_dif`     1    28.436 1107.9 189.15
-## - `wrist rigidity_dif`     1    33.286 1112.7 189.38
-## &lt;none&gt;                                 1079.4 189.74
-## - `Total score SAS_dif`    1    60.790 1140.2 190.70
-## - `shoulder shaking_dif`   1    84.983 1164.4 191.83
-## - salivation_dif           1   137.628 1217.1 194.22
+## - akathisia_dif            1     0.116 1072.5 187.39
+## - tremor_dif               1     3.445 1075.8 187.56
+## - `THF dose`               1     6.569 1079.0 187.72
+## - `arm dropping_dif`       1     7.345 1079.7 187.76
+## - CPZE                     1     8.475 1080.9 187.81
+## - `Total score PANSS_dif`  1    14.516 1086.9 188.11
+## - `elbow rigidity_dif`     1    15.017 1087.4 188.14
+## - `head rotation_dif`      1    23.293 1095.7 188.55
+## - `Total score SAS_dif`    1    28.728 1101.1 188.81
+## - `disease duration`       1    29.284 1101.7 188.84
+## - `wrist rigidity_dif`     1    31.916 1104.3 188.97
+## &lt;none&gt;                                 1072.4 189.39
+## - `shoulder shaking_dif`   1    61.804 1134.2 190.41
+## - salivation_dif           1    91.464 1163.8 191.81
 ## 
-## Step:  AIC=187.75
+## Step:  AIC=187.39
 ## `Comp Z_dif` ~ `disease duration` + `THF dose` + `arm dropping_dif` + 
 ##     `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + 
 ##     `head rotation_dif` + tremor_dif + salivation_dif + `Total score SAS_dif` + 
 ##     `Total score PANSS_dif` + CPZE
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - CPZE                     1     1.264 1080.9 185.81
-## - `arm dropping_dif`       1     7.579 1087.2 186.13
-## - tremor_dif               1     8.638 1088.3 186.18
-## - `THF dose`               1    11.522 1091.2 186.32
-## - `Total score PANSS_dif`  1    19.417 1099.1 186.71
-## - `disease duration`       1    24.562 1104.2 186.97
-## - `elbow rigidity_dif`     1    28.407 1108.0 187.15
-## - `head rotation_dif`      1    28.840 1108.5 187.18
-## - `wrist rigidity_dif`     1    33.142 1112.8 187.38
-## &lt;none&gt;                                 1079.7 187.75
-## - `Total score SAS_dif`    1    62.700 1142.3 188.80
-## - `shoulder shaking_dif`   1    85.966 1165.6 189.89
-## - salivation_dif           1   137.466 1217.1 192.22
+## - `THF dose`               1     6.527 1079.0 185.72
+## - tremor_dif               1     7.230 1079.7 185.76
+## - CPZE                     1     8.414 1080.9 185.81
+## - `arm dropping_dif`       1     9.161 1081.7 185.85
+## - `Total score PANSS_dif`  1    19.454 1092.0 186.36
+## - `elbow rigidity_dif`     1    27.674 1100.2 186.77
+## - `disease duration`       1    29.557 1102.0 186.86
+## - `head rotation_dif`      1    30.041 1102.5 186.88
+## - `wrist rigidity_dif`     1    32.027 1104.5 186.98
+## &lt;none&gt;                                 1072.5 187.39
+## - `Total score SAS_dif`    1    65.690 1138.2 188.60
+## - `shoulder shaking_dif`   1    86.318 1158.8 189.57
+## - salivation_dif           1   144.030 1216.5 192.20
 ## 
-## Step:  AIC=185.82
-## `Comp Z_dif` ~ `disease duration` + `THF dose` + `arm dropping_dif` + 
-##     `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + 
-##     `head rotation_dif` + tremor_dif + salivation_dif + `Total score SAS_dif` + 
-##     `Total score PANSS_dif`
-## 
-##                           Df Sum of Sq    RSS    AIC
-## - `arm dropping_dif`       1     6.957 1087.9 184.16
-## - tremor_dif               1     8.606 1089.5 184.24
-## - `THF dose`               1    16.323 1097.2 184.62
-## - `Total score PANSS_dif`  1    22.453 1103.4 184.93
-## - `disease duration`       1    23.299 1104.2 184.97
-## - `head rotation_dif`      1    28.991 1109.9 185.24
-## - `elbow rigidity_dif`     1    29.490 1110.4 185.27
-## - `wrist rigidity_dif`     1    34.263 1115.2 185.50
-## &lt;none&gt;                                 1080.9 185.81
-## - `Total score SAS_dif`    1    62.742 1143.7 186.86
-## - `shoulder shaking_dif`   1    86.975 1167.9 187.99
-## - salivation_dif           1   136.314 1217.2 190.23
-## 
-## Step:  AIC=184.16
-## `Comp Z_dif` ~ `disease duration` + `THF dose` + `shoulder shaking_dif` + 
+## Step:  AIC=185.72
+## `Comp Z_dif` ~ `disease duration` + `arm dropping_dif` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
-##     tremor_dif + salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif`
+##     tremor_dif + salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
+##     CPZE
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - tremor_dif               1     3.556 1091.4 182.34
-## - `THF dose`               1    11.487 1099.3 182.73
-## - `disease duration`       1    21.936 1109.8 183.24
-## - `elbow rigidity_dif`     1    26.106 1114.0 183.44
-## - `Total score PANSS_dif`  1    31.624 1119.5 183.71
-## - `head rotation_dif`      1    36.776 1124.6 183.96
-## &lt;none&gt;                                 1087.9 184.16
-## - `wrist rigidity_dif`     1    45.433 1133.3 184.37
-## - `shoulder shaking_dif`   1    83.382 1171.2 186.15
-## - `Total score SAS_dif`    1    99.408 1187.3 186.88
-## - salivation_dif           1   141.201 1229.1 188.75
+## - tremor_dif               1     6.273 1085.3 184.03
+## - `arm dropping_dif`       1     6.336 1085.4 184.04
+## - CPZE                     1    18.210 1097.2 184.62
+## - `Total score PANSS_dif`  1    19.805 1098.8 184.70
+## - `elbow rigidity_dif`     1    26.364 1105.4 185.02
+## - `head rotation_dif`      1    27.162 1106.2 185.06
+## - `disease duration`       1    27.322 1106.3 185.07
+## - `wrist rigidity_dif`     1    33.761 1112.8 185.38
+## &lt;none&gt;                                 1079.0 185.72
+## - `Total score SAS_dif`    1    67.244 1146.3 186.99
+## - `shoulder shaking_dif`   1    91.068 1170.1 188.10
+## - salivation_dif           1   144.272 1223.3 190.50
 ## 
-## Step:  AIC=182.34
-## `Comp Z_dif` ~ `disease duration` + `THF dose` + `shoulder shaking_dif` + 
+## Step:  AIC=184.03
+## `Comp Z_dif` ~ `disease duration` + `arm dropping_dif` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
-##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif`
+##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
+##     CPZE
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - `THF dose`               1    13.371 1104.8 181.00
-## - `elbow rigidity_dif`     1    24.309 1115.7 181.53
-## - `disease duration`       1    28.006 1119.4 181.71
-## - `Total score PANSS_dif`  1    31.900 1123.3 181.89
-## &lt;none&gt;                                 1091.4 182.34
-## - `wrist rigidity_dif`     1    43.771 1135.2 182.46
-## - `head rotation_dif`      1    51.415 1142.8 182.82
-## - `shoulder shaking_dif`   1    90.046 1181.5 184.62
-## - `Total score SAS_dif`    1   189.014 1280.4 188.96
-## - salivation_dif           1   208.524 1300.0 189.78
+## - `arm dropping_dif`       1     2.326 1087.6 182.15
+## - CPZE                     1    19.489 1104.8 183.00
+## - `elbow rigidity_dif`     1    22.909 1108.2 183.16
+## - `Total score PANSS_dif`  1    23.139 1108.4 183.17
+## - `disease duration`       1    34.369 1119.7 183.72
+## - `wrist rigidity_dif`     1    35.317 1120.6 183.76
+## &lt;none&gt;                                 1085.3 184.03
+## - `head rotation_dif`      1    47.053 1132.3 184.33
+## - `shoulder shaking_dif`   1    95.051 1180.3 186.57
+## - `Total score SAS_dif`    1   180.059 1265.4 190.32
+## - salivation_dif           1   215.575 1300.9 191.82
+## 
+## Step:  AIC=182.15
+## `Comp Z_dif` ~ `disease duration` + `shoulder shaking_dif` + 
+##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
+##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
+##     CPZE
+## 
+##                           Df Sum of Sq    RSS    AIC
+## - CPZE                     1    17.173 1104.8 181.00
+## - `elbow rigidity_dif`     1    22.208 1109.8 181.24
+## - `Total score PANSS_dif`  1    28.635 1116.3 181.55
+## - `disease duration`       1    32.183 1119.8 181.72
+## &lt;none&gt;                                 1087.6 182.15
+## - `wrist rigidity_dif`     1    43.120 1130.7 182.25
+## - `head rotation_dif`      1    48.296 1135.9 182.50
+## - `shoulder shaking_dif`   1    92.726 1180.3 184.57
+## - `Total score SAS_dif`    1   190.093 1277.7 188.85
+## - salivation_dif           1   215.831 1303.5 189.93
 ## 
 ## Step:  AIC=181
 ## `Comp Z_dif` ~ `disease duration` + `shoulder shaking_dif` + 
@@ -4096,18 +4169,16 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %&gt;%
 ## F-statistic: 3.705 on 4 and 49 DF,  p-value: 0.01032</code></pre>
 <p>Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:
 0.2322, Adjusted R-squared: 0.1695).</p>
-<p>Теперь используем 5-факторную модель PANSS. Заменим пропущенные
-значения CPZE на среднее (это нужно для работы step())</p>
+<p>Теперь используем 5-факторную модель PANSS.</p>
 <pre class="r"><code>selected_data &lt;- difference_df %&gt;% 
   select(-id, -starts_with(c(&quot;N&quot;, &quot;P&quot;, &quot;G&quot;, &quot;Z&quot;)), negative_dif, positive_dif, CPZE) %&gt;% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, 
-         -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %&gt;% 
-  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+         -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;% 
   step() %&gt;% 
   summary()</code></pre>
-<pre><code>## Start:  AIC=187.24
+<pre><code>## Start:  AIC=186.98
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `arm dropping_dif` + 
 ##     `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + 
 ##     `head rotation_dif` + tremor_dif + salivation_dif + akathisia_dif + 
@@ -4115,28 +4186,28 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;%
 ##     cognitive_dif + depression_dif + CPZE + negative_dif + positive_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - `arm dropping_dif`       1     0.320 825.60 185.26
-## - tremor_dif               1     0.526 825.80 185.28
-## - excitment_dif            1     0.740 826.01 185.29
-## - akathisia_dif            1     0.947 826.22 185.31
-## - positive_dif             1     2.138 827.41 185.38
-## - age                      1     3.181 828.46 185.45
-## - negative_dif             1     6.225 831.50 185.65
-## - `disease duration`       1     6.832 832.11 185.69
-## - `head rotation_dif`      1     9.428 834.70 185.86
-## - `THF dose`               1    10.204 835.48 185.91
-## - `Total score PANSS_dif`  1    11.337 836.61 185.98
-## - CPZE                     1    18.880 844.15 186.47
-## - `Total score SAS_dif`    1    20.938 846.21 186.60
-## - `elbow rigidity_dif`     1    20.976 846.25 186.60
-## - salivation_dif           1    28.998 854.27 187.11
-## &lt;none&gt;                                 825.27 187.24
-## - `wrist rigidity_dif`     1    46.786 872.06 188.22
-## - cognitive_dif            1    55.394 880.67 188.75
-## - depression_dif           1    73.443 898.72 189.85
-## - `shoulder shaking_dif`   1    89.181 914.46 190.78
+## - `arm dropping_dif`       1     0.024 821.29 184.98
+## - tremor_dif               1     0.309 821.58 185.00
+## - akathisia_dif            1     0.961 822.23 185.04
+## - positive_dif             1     1.555 822.83 185.08
+## - excitment_dif            1     1.909 823.18 185.11
+## - age                      1     1.952 823.22 185.11
+## - negative_dif             1     7.210 828.48 185.45
+## - `Total score PANSS_dif`  1     8.473 829.74 185.53
+## - `disease duration`       1     9.495 830.77 185.60
+## - `head rotation_dif`      1    10.106 831.38 185.64
+## - `THF dose`               1    11.116 832.39 185.71
+## - `elbow rigidity_dif`     1    21.046 842.32 186.35
+## - `Total score SAS_dif`    1    22.180 843.45 186.42
+## - CPZE                     1    22.883 844.15 186.47
+## &lt;none&gt;                                 821.27 186.98
+## - salivation_dif           1    34.162 855.43 187.18
+## - `wrist rigidity_dif`     1    45.720 866.99 187.91
+## - cognitive_dif            1    52.422 873.69 188.32
+## - depression_dif           1    64.765 886.04 189.08
+## - `shoulder shaking_dif`   1    91.214 912.49 190.67
 ## 
-## Step:  AIC=185.26
+## Step:  AIC=184.98
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     tremor_dif + salivation_dif + akathisia_dif + `Total score SAS_dif` + 
@@ -4144,187 +4215,188 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;%
 ##     depression_dif + CPZE + negative_dif + positive_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - excitment_dif            1     1.098 826.69 183.34
-## - akathisia_dif            1     1.485 827.08 183.36
-## - tremor_dif               1     1.711 827.31 183.38
-## - positive_dif             1     1.913 827.51 183.39
-## - age                      1     2.865 828.46 183.45
-## - negative_dif             1     6.776 832.37 183.71
-## - `disease duration`       1     8.324 833.92 183.81
-## - `head rotation_dif`      1     9.440 835.03 183.88
-## - `THF dose`               1    10.313 835.91 183.94
-## - `Total score PANSS_dif`  1    11.074 836.67 183.98
-## - CPZE                     1    18.624 844.22 184.47
-## - `elbow rigidity_dif`     1    24.243 849.84 184.83
-## - `Total score SAS_dif`    1    25.200 850.80 184.89
-## - salivation_dif           1    28.843 854.44 185.12
-## &lt;none&gt;                                 825.60 185.26
-## - `wrist rigidity_dif`     1    50.438 876.03 186.47
-## - cognitive_dif            1    58.752 884.35 186.98
-## - depression_dif           1    74.210 899.81 187.91
-## - `shoulder shaking_dif`   1    89.217 914.81 188.81
+## - tremor_dif               1     0.632 821.93 183.02
+## - akathisia_dif            1     1.180 822.48 183.06
+## - positive_dif             1     1.535 822.83 183.08
+## - age                      1     2.060 823.36 183.12
+## - excitment_dif            1     2.150 823.44 183.12
+## - negative_dif             1     7.506 828.80 183.47
+## - `Total score PANSS_dif`  1     8.719 830.01 183.55
+## - `disease duration`       1    10.670 831.96 183.68
+## - `head rotation_dif`      1    11.247 832.54 183.72
+## - `THF dose`               1    12.064 833.36 183.77
+## - CPZE                     1    22.924 844.22 184.47
+## - `elbow rigidity_dif`     1    23.143 844.44 184.48
+## - `Total score SAS_dif`    1    29.420 850.72 184.88
+## &lt;none&gt;                                 821.29 184.98
+## - salivation_dif           1    34.997 856.29 185.24
+## - `wrist rigidity_dif`     1    51.233 872.53 186.25
+## - cognitive_dif            1    57.091 878.39 186.61
+## - depression_dif           1    66.487 887.78 187.19
+## - `shoulder shaking_dif`   1    92.288 913.58 188.73
 ## 
-## Step:  AIC=183.34
+## Step:  AIC=183.02
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
-##     tremor_dif + salivation_dif + akathisia_dif + `Total score SAS_dif` + 
-##     `Total score PANSS_dif` + cognitive_dif + depression_dif + 
-##     CPZE + negative_dif + positive_dif
+##     salivation_dif + akathisia_dif + `Total score SAS_dif` + 
+##     `Total score PANSS_dif` + excitment_dif + cognitive_dif + 
+##     depression_dif + CPZE + negative_dif + positive_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - akathisia_dif            1     1.759 828.45 181.45
-## - tremor_dif               1     2.104 828.80 181.47
-## - age                      1     2.938 829.63 181.53
-## - positive_dif             1     4.829 831.52 181.65
-## - negative_dif             1     5.785 832.48 181.71
-## - `disease duration`       1     7.988 834.68 181.86
-## - `head rotation_dif`      1     8.782 835.48 181.91
-## - `THF dose`               1    12.749 839.44 182.16
-## - CPZE                     1    22.696 849.39 182.80
-## - `Total score SAS_dif`    1    24.348 851.04 182.90
-## - `elbow rigidity_dif`     1    26.417 853.11 183.03
-## - `Total score PANSS_dif`  1    26.762 853.45 183.06
-## - salivation_dif           1    27.883 854.58 183.13
-## &lt;none&gt;                                 826.69 183.34
-## - `wrist rigidity_dif`     1    57.625 884.32 184.97
-## - `shoulder shaking_dif`   1    88.120 914.81 186.81
-## - cognitive_dif            1    94.655 921.35 187.19
-## - depression_dif           1   108.187 934.88 187.98
+## - akathisia_dif            1     0.602 822.53 181.06
+## - positive_dif             1     1.279 823.21 181.11
+## - age                      1     2.027 823.95 181.16
+## - excitment_dif            1     2.447 824.37 181.19
+## - negative_dif             1     7.628 829.55 181.52
+## - `Total score PANSS_dif`  1     8.628 830.55 181.59
+## - `THF dose`               1    11.533 833.46 181.78
+## - `disease duration`       1    12.050 833.98 181.81
+## - `head rotation_dif`      1    19.551 841.48 182.29
+## - CPZE                     1    24.099 846.03 182.59
+## - `elbow rigidity_dif`     1    24.244 846.17 182.59
+## &lt;none&gt;                                 821.93 183.02
+## - `wrist rigidity_dif`     1    50.650 872.58 184.25
+## - cognitive_dif            1    56.467 878.39 184.61
+## - depression_dif           1    65.945 887.87 185.19
+## - salivation_dif           1    71.882 893.81 185.55
+## - `Total score SAS_dif`    1    80.656 902.58 186.08
+## - `shoulder shaking_dif`   1   115.070 937.00 188.10
 ## 
-## Step:  AIC=181.45
-## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `shoulder shaking_dif` + 
-##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
-##     tremor_dif + salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
-##     cognitive_dif + depression_dif + CPZE + negative_dif + positive_dif
-## 
-##                           Df Sum of Sq    RSS    AIC
-## - tremor_dif               1     0.744 829.20 179.50
-## - age                      1     2.513 830.97 179.62
-## - negative_dif             1     4.764 833.22 179.76
-## - positive_dif             1     5.113 833.56 179.78
-## - `disease duration`       1     8.115 836.57 179.98
-## - `THF dose`               1    11.379 839.83 180.19
-## - `head rotation_dif`      1    16.121 844.57 180.49
-## - CPZE                     1    22.869 851.32 180.92
-## - `elbow rigidity_dif`     1    30.014 858.47 181.37
-## &lt;none&gt;                                 828.45 181.45
-## - `Total score PANSS_dif`  1    32.013 860.47 181.50
-## - `wrist rigidity_dif`     1    56.886 885.34 183.04
-## - salivation_dif           1    58.329 886.78 183.12
-## - `Total score SAS_dif`    1    82.315 910.77 184.57
-## - cognitive_dif            1    96.519 924.97 185.40
-## - depression_dif           1   107.121 935.57 186.02
-## - `shoulder shaking_dif`   1   146.831 975.28 188.26
-## 
-## Step:  AIC=179.5
+## Step:  AIC=181.06
 ## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
-##     cognitive_dif + depression_dif + CPZE + negative_dif + positive_dif
+##     excitment_dif + cognitive_dif + depression_dif + CPZE + negative_dif + 
+##     positive_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - age                      1     2.691 831.89 177.67
-## - positive_dif             1     4.615 833.81 177.80
-## - negative_dif             1     5.040 834.24 177.83
-## - `disease duration`       1     9.264 838.46 178.10
-## - `THF dose`               1    11.006 840.20 178.21
-## - `head rotation_dif`      1    21.449 850.64 178.88
-## - CPZE                     1    23.270 852.47 178.99
-## - `elbow rigidity_dif`     1    29.380 858.58 179.38
-## &lt;none&gt;                                 829.20 179.50
-## - `Total score PANSS_dif`  1    31.448 860.64 179.51
-## - `wrist rigidity_dif`     1    56.145 885.34 181.04
-## - salivation_dif           1    82.483 911.68 182.62
-## - cognitive_dif            1    95.789 924.98 183.40
-## - depression_dif           1   107.891 937.09 184.10
-## - `Total score SAS_dif`    1   140.147 969.34 185.93
-## - `shoulder shaking_dif`   1   150.635 979.83 186.51
+## - positive_dif             1     1.465 823.99 179.16
+## - age                      1     1.802 824.33 179.18
+## - excitment_dif            1     2.544 825.07 179.23
+## - negative_dif             1     7.137 829.67 179.53
+## - `Total score PANSS_dif`  1     9.678 832.21 179.69
+## - `THF dose`               1    11.002 833.53 179.78
+## - `disease duration`       1    11.665 834.19 179.82
+## - `head rotation_dif`      1    22.635 845.16 180.53
+## - CPZE                     1    23.747 846.28 180.60
+## - `elbow rigidity_dif`     1    27.816 850.34 180.86
+## &lt;none&gt;                                 822.53 181.06
+## - `wrist rigidity_dif`     1    50.895 873.42 182.31
+## - cognitive_dif            1    57.502 880.03 182.71
+## - depression_dif           1    65.405 887.93 183.19
+## - salivation_dif           1    91.261 913.79 184.75
+## - `Total score SAS_dif`    1   145.731 968.26 187.87
+## - `shoulder shaking_dif`   1   153.053 975.58 188.28
 ## 
-## Step:  AIC=177.67
+## Step:  AIC=179.16
+## `Comp Z_dif` ~ age + `disease duration` + `THF dose` + `shoulder shaking_dif` + 
+##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
+##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
+##     excitment_dif + cognitive_dif + depression_dif + CPZE + negative_dif
+## 
+##                           Df Sum of Sq    RSS    AIC
+## - age                      1     1.330 825.32 177.25
+## - excitment_dif            1     6.330 830.32 177.57
+## - `THF dose`               1    10.783 834.78 177.86
+## - `Total score PANSS_dif`  1    13.215 837.21 178.02
+## - `disease duration`       1    14.406 838.40 178.10
+## - negative_dif             1    21.640 845.63 178.56
+## - `head rotation_dif`      1    22.676 846.67 178.63
+## - CPZE                     1    22.930 846.92 178.64
+## - `elbow rigidity_dif`     1    27.564 851.56 178.94
+## &lt;none&gt;                                 823.99 179.16
+## - `wrist rigidity_dif`     1    49.446 873.44 180.31
+## - cognitive_dif            1    80.852 904.85 182.21
+## - depression_dif           1    98.197 922.19 183.24
+## - salivation_dif           1   100.228 924.22 183.36
+## - `Total score SAS_dif`    1   144.639 968.63 185.89
+## - `shoulder shaking_dif`   1   152.446 976.44 186.33
+## 
+## Step:  AIC=177.25
 ## `Comp Z_dif` ~ `disease duration` + `THF dose` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
-##     cognitive_dif + depression_dif + CPZE + negative_dif + positive_dif
+##     excitment_dif + cognitive_dif + depression_dif + CPZE + negative_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - positive_dif             1     3.486 835.37 175.90
-## - negative_dif             1     6.449 838.34 176.09
-## - `THF dose`               1    11.132 843.02 176.39
-## - `head rotation_dif`      1    19.081 850.97 176.90
-## - CPZE                     1    23.258 855.14 177.16
-## - `disease duration`       1    24.324 856.21 177.23
-## - `elbow rigidity_dif`     1    28.451 860.34 177.49
-## - `Total score PANSS_dif`  1    29.200 861.09 177.54
-## &lt;none&gt;                                 831.89 177.67
-## - `wrist rigidity_dif`     1    58.880 890.77 179.37
-## - salivation_dif           1    84.406 916.29 180.89
-## - cognitive_dif            1    94.587 926.47 181.49
-## - depression_dif           1   105.369 937.26 182.11
-## - `Total score SAS_dif`    1   138.260 970.15 183.98
-## - `shoulder shaking_dif`   1   150.748 982.63 184.67
+## - excitment_dif            1     5.857 831.18 175.63
+## - `THF dose`               1    11.150 836.47 175.97
+## - `Total score PANSS_dif`  1    13.193 838.52 176.10
+## - `head rotation_dif`      1    21.346 846.67 176.63
+## - negative_dif             1    22.219 847.54 176.68
+## - CPZE                     1    23.798 849.12 176.78
+## - `elbow rigidity_dif`     1    26.959 852.28 176.98
+## - `disease duration`       1    29.702 855.03 177.16
+## &lt;none&gt;                                 825.32 177.25
+## - `wrist rigidity_dif`     1    52.123 877.45 178.55
+## - cognitive_dif            1    83.927 909.25 180.48
+## - depression_dif           1    96.933 922.26 181.24
+## - salivation_dif           1   100.787 926.11 181.47
+## - `Total score SAS_dif`    1   143.554 968.88 183.91
+## - `shoulder shaking_dif`   1   153.535 978.86 184.46
 ## 
-## Step:  AIC=175.9
+## Step:  AIC=175.63
 ## `Comp Z_dif` ~ `disease duration` + `THF dose` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
 ##     cognitive_dif + depression_dif + CPZE + negative_dif
 ## 
 ##                           Df Sum of Sq    RSS    AIC
-## - `THF dose`               1    12.259 847.63 174.69
-## - negative_dif             1    17.403 852.78 175.01
-## - `head rotation_dif`      1    19.359 854.73 175.14
-## - CPZE                     1    23.891 859.26 175.42
-## - `disease duration`       1    28.148 863.52 175.69
-## - `elbow rigidity_dif`     1    29.556 864.93 175.78
-## &lt;none&gt;                                 835.37 175.90
-## - `Total score PANSS_dif`  1    35.080 870.45 176.12
-## - `wrist rigidity_dif`     1    57.325 892.70 177.48
-## - salivation_dif           1    95.906 931.28 179.77
-## - cognitive_dif            1   106.928 942.30 180.40
-## - depression_dif           1   126.163 961.54 181.50
-## - `Total score SAS_dif`    1   136.571 971.94 182.08
-## - `shoulder shaking_dif`   1   148.377 983.75 182.73
+## - `THF dose`               1    14.720 845.90 174.58
+## - negative_dif             1    17.152 848.33 174.73
+## - `head rotation_dif`      1    20.490 851.67 174.94
+## - CPZE                     1    28.083 859.26 175.42
+## - `Total score PANSS_dif`  1    29.609 860.79 175.52
+## - `disease duration`       1    30.232 861.41 175.56
+## - `elbow rigidity_dif`     1    30.659 861.84 175.59
+## &lt;none&gt;                                 831.18 175.63
+## - `wrist rigidity_dif`     1    60.282 891.46 177.41
+## - salivation_dif           1   105.566 936.75 180.09
+## - cognitive_dif            1   106.087 937.27 180.12
+## - depression_dif           1   112.229 943.41 180.47
+## - `Total score SAS_dif`    1   142.515 973.70 182.17
+## - `shoulder shaking_dif`   1   147.782 978.96 182.47
 ## 
-## Step:  AIC=174.69
+## Step:  AIC=174.58
 ## `Comp Z_dif` ~ `disease duration` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
 ##     cognitive_dif + depression_dif + CPZE + negative_dif
 ## 
-##                           Df Sum of Sq    RSS    AIC
-## - negative_dif             1     9.550 857.18 173.29
-## - CPZE                     1    12.906 860.54 173.50
-## - `disease duration`       1    28.532 876.16 174.47
-## - `elbow rigidity_dif`     1    29.555 877.19 174.54
-## - `head rotation_dif`      1    29.825 877.46 174.55
-## &lt;none&gt;                                 847.63 174.69
-## - `Total score PANSS_dif`  1    33.447 881.08 174.78
-## - `wrist rigidity_dif`     1    55.825 903.46 176.13
-## - cognitive_dif            1    96.773 944.40 178.53
-## - salivation_dif           1   112.753 960.38 179.43
-## - depression_dif           1   122.845 970.48 180.00
-## - `shoulder shaking_dif`   1   138.585 986.22 180.86
-## - `Total score SAS_dif`    1   150.437 998.07 181.51
+##                           Df Sum of Sq     RSS    AIC
+## - negative_dif             1     8.763  854.66 173.13
+## - CPZE                     1    14.637  860.54 173.50
+## - `disease duration`       1    29.743  875.64 174.44
+## - `Total score PANSS_dif`  1    29.990  875.89 174.46
+## - `elbow rigidity_dif`     1    30.234  876.13 174.47
+## - `head rotation_dif`      1    31.219  877.12 174.53
+## &lt;none&gt;                                  845.90 174.58
+## - `wrist rigidity_dif`     1    57.511  903.41 176.13
+## - cognitive_dif            1    95.071  940.97 178.33
+## - depression_dif           1   113.095  958.99 179.35
+## - salivation_dif           1   118.596  964.50 179.66
+## - `shoulder shaking_dif`   1   136.984  982.88 180.68
+## - `Total score SAS_dif`    1   154.099 1000.00 181.61
 ## 
-## Step:  AIC=173.29
+## Step:  AIC=173.13
 ## `Comp Z_dif` ~ `disease duration` + `shoulder shaking_dif` + 
 ##     `elbow rigidity_dif` + `wrist rigidity_dif` + `head rotation_dif` + 
 ##     salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + 
 ##     cognitive_dif + depression_dif + CPZE
 ## 
 ##                           Df Sum of Sq     RSS    AIC
-## - CPZE                     1    10.133  867.31 171.93
-## - `disease duration`       1    24.260  881.44 172.80
-## - `elbow rigidity_dif`     1    26.111  883.29 172.91
-## - `head rotation_dif`      1    30.882  888.06 173.20
-## &lt;none&gt;                                  857.18 173.29
-## - `wrist rigidity_dif`     1    69.795  926.98 175.52
-## - `Total score PANSS_dif`  1    97.132  954.31 177.09
-## - `shoulder shaking_dif`   1   143.493 1000.67 179.65
-## - salivation_dif           1   147.944 1005.13 179.89
-## - depression_dif           1   151.621 1008.80 180.09
-## - cognitive_dif            1   155.929 1013.11 180.32
-## - `Total score SAS_dif`    1   164.786 1021.97 180.79
+## - CPZE                     1    12.651  867.31 171.93
+## - `disease duration`       1    25.881  880.54 172.74
+## - `elbow rigidity_dif`     1    26.772  881.43 172.80
+## - `head rotation_dif`      1    32.242  886.91 173.13
+## &lt;none&gt;                                  854.66 173.13
+## - `wrist rigidity_dif`     1    71.075  925.74 175.45
+## - `Total score PANSS_dif`  1    90.536  945.20 176.57
+## - depression_dif           1   140.036  994.70 179.33
+## - `shoulder shaking_dif`   1   141.303  995.97 179.40
+## - salivation_dif           1   152.663 1007.33 180.01
+## - cognitive_dif            1   154.092 1008.75 180.08
+## - `Total score SAS_dif`    1   167.907 1022.57 180.82
 ## 
 ## Step:  AIC=171.93
 ## `Comp Z_dif` ~ `disease duration` + `shoulder shaking_dif` + 
@@ -4406,45 +4478,6 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;%
 ## Residual standard error: 4.512 on 45 degrees of freedom
 ## Multiple R-squared:  0.4149, Adjusted R-squared:  0.3109 
 ## F-statistic: 3.989 on 8 and 45 DF,  p-value: 0.001216</code></pre>
-<pre class="r"><code>data_filtered %&gt;% colnames()</code></pre>
-<pre><code>##  [1] &quot;id&quot;                            &quot;gender&quot;                       
-##  [3] &quot;age&quot;                           &quot;disease duration&quot;             
-##  [5] &quot;antipsychotic&quot;                 &quot;antipsychotic dose&quot;           
-##  [7] &quot;antipsychotic generation&quot;      &quot;THF dose&quot;                     
-##  [9] &quot;course&quot;                        &quot;education&quot;                    
-## [11] &quot;smoke&quot;                         &quot;visit&quot;                        
-## [13] &quot;gait&quot;                          &quot;arm dropping&quot;                 
-## [15] &quot;shoulder shaking&quot;              &quot;elbow rigidity&quot;               
-## [17] &quot;wrist rigidity&quot;                &quot;head rotation&quot;                
-## [19] &quot;glabella tap&quot;                  &quot;tremor&quot;                       
-## [21] &quot;salivation&quot;                    &quot;akathisia&quot;                    
-## [23] &quot;Total score SAS&quot;               &quot;P1&quot;                           
-## [25] &quot;P2&quot;                            &quot;P3&quot;                           
-## [27] &quot;P4&quot;                            &quot;P5&quot;                           
-## [29] &quot;P6&quot;                            &quot;P7&quot;                           
-## [31] &quot;Positive scale&quot;                &quot;N1&quot;                           
-## [33] &quot;N2&quot;                            &quot;N3&quot;                           
-## [35] &quot;N4&quot;                            &quot;N5&quot;                           
-## [37] &quot;N6&quot;                            &quot;N7&quot;                           
-## [39] &quot;Negative scale&quot;                &quot;G1&quot;                           
-## [41] &quot;G2&quot;                            &quot;G3&quot;                           
-## [43] &quot;G4&quot;                            &quot;G5&quot;                           
-## [45] &quot;G6&quot;                            &quot;G7&quot;                           
-## [47] &quot;G8&quot;                            &quot;G9&quot;                           
-## [49] &quot;G10&quot;                           &quot;G11&quot;                          
-## [51] &quot;G12&quot;                           &quot;G13&quot;                          
-## [53] &quot;G14&quot;                           &quot;G15&quot;                          
-## [55] &quot;G16&quot;                           &quot;General Psychopathology scale&quot;
-## [57] &quot;Total score PANSS&quot;             &quot;Verbal Memory&quot;                
-## [59] &quot;ZVM&quot;                           &quot;Digit Sequencing&quot;             
-## [61] &quot;ZDS&quot;                           &quot;Token Motor Task&quot;             
-## [63] &quot;ZMT&quot;                           &quot;Verbal Fluency&quot;               
-## [65] &quot;ZVF&quot;                           &quot;Symbol Coding&quot;                
-## [67] &quot;ZSC&quot;                           &quot;Tower of London&quot;              
-## [69] &quot;ZToL&quot;                          &quot;Comp Z&quot;                       
-## [71] &quot;negative&quot;                      &quot;excitment&quot;                    
-## [73] &quot;cognitive&quot;                     &quot;positive&quot;                     
-## [75] &quot;depression&quot;                    &quot;CPZE&quot;</code></pre>
 <p>Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:
 0.4149, Adjusted R-squared: 0.3109).</p>
 <p>Эта же модель с подробным описанием.</p>
@@ -4873,6 +4906,7 @@ depression_dif
 </tr>
 </tbody>
 </table>
+<p>Здесь можно поразвлекаться с моделями</p>
 <pre class="r"><code>lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
      `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %&gt;% 
   summary()</code></pre>

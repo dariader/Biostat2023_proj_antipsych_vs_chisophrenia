@@ -131,6 +131,7 @@ preprocessing <- function(filename, output='../_misc/') {
              antipsychotic == "галоперидол" ~ `antipsychotic dose` / 2.67,
              antipsychotic == "зуклопентиксол" ~ `antipsychotic dose` / 10,
              antipsychotic %in% c("рисперидон", "карипразин") ~ `antipsychotic dose` / 1.67, # [Németh, György et al. “Cariprazine versus risperidone monotherapy for treatment of predominant negative symptoms in patients with schizophrenia: a randomised, double-blind, controlled trial.” Lancet (London, England) vol. 389,10074 (2017): 1103-1113. doi:10.1016/S0140-6736(17)30060-0]
+             antipsychotic == "кветиапин" ~ `antipsychotic dose` / 133.33,
              antipsychotic == "оланзапин" ~ `antipsychotic dose` / 3.33,
              antipsychotic == "палиперидон" ~ `antipsychotic dose` / 2.0,
              antipsychotic == "трифлуоперазин" ~ `antipsychotic dose` / 6.67,

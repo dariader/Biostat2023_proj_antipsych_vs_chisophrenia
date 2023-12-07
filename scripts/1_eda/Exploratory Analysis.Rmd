@@ -262,14 +262,9 @@ data_filtered <- preprocessing("../../data/Data_SAS.xlsx")
 
 ## EDA - исправленные данные
 
-```{r eval=FALSE}
-data_filtered %>% 
-  glimpse()
-```
-
 ```{r}
-#data_filtered %>% 
-# summary()
+data_filtered %>% 
+ glimpse()
 ```
 
 
@@ -450,14 +445,12 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %>%
 ```
 Исключим так же `Verbal Memory`, `Digit Sequencing`, `Token Motor Task`, `Verbal Fluency`, `Symbol Coding`, `Tower of London`.
 
-Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
 ```{r}
 selected_data <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
          -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z')) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
-         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
-  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
   step() %>% 
@@ -466,22 +459,16 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %>%
 Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
 
 Теперь используем 5-факторную модель PANSS.
-Заменим пропущенные значения CPZE на среднее (это нужно для работы step())
 ```{r}
 selected_data <- difference_df %>% 
   select(-id, -starts_with(c("N", "P", "G", "Z")), negative_dif, positive_dif, CPZE) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, -`Token Motor Task_dif`, 
-         -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
-  mutate(CPZE = if_else(is.na(CPZE), mean(CPZE, na.rm = TRUE), CPZE))
+         -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data = selected_data) %>% 
   step() %>% 
   summary()
 ```
-```{r}
-data_filtered %>% colnames()
-```
-
 Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:  0.4149,	Adjusted R-squared:  0.3109).
 
 Эта же модель с подробным описанием.
@@ -496,6 +483,8 @@ results %>%
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
 ```
+
+Здесь можно поразвлекаться с моделями
 ```{r}
 lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
      `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %>% 
