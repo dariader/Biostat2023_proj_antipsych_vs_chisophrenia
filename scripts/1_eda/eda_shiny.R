@@ -109,29 +109,29 @@ server <- function(input, output) {
   #corrplot(corr_matrix)
   #fviz_eig(data.pca, addlabels = TRUE)
   #fviz_cos2(data.pca, choice = "var", axes = 1:2)
-
+  
   output$pca <- renderPlot({
     variable <- input$pca_variable
     split_by_visit_num <- input$split_by_visit_pca
     data_num <- data_filtered[,c(numeric_columns,factor_columns)]
     data_num <- data_num[complete.cases(data_num),]
     data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
-
+    
     data.pca <- princomp(cor(data_num))
     # if (split_by_visit_num) {
     #   gg <- gg + facet_wrap(~visit)
     # }
-
+    
     #print(gg)
   })
-
+  
   output$corr <- renderPlotly({
     data_num <- data_filtered[,c(numeric_columns,factor_columns)]
     data_num[factor_columns] <- lapply(data_filtered[factor_columns], as.integer)
     cor_matrix <- cor(data_num)
-
+    
     # Create a correlation plot using plot_ly
-      plot <- plot_ly(
+    plot <- plot_ly(
       x = colnames(cor_matrix),
       y = colnames(cor_matrix),
       z = cor_matrix,
@@ -139,21 +139,21 @@ server <- function(input, output) {
       colorscale = "Vulcano",
       colorbar = list(title = "Correlation")
     )
-
+    
     # Customize layout
     layout <- list(
       title = "Correlation Plot",
       xaxis = list(title = ""),
       yaxis = list(title = "")
     )
-
+    
     # Combine plot and layout
     cor_plot <- layout(plot, layout)
-
+    
     # Show the plot
     cor_plot
   })
-
+  
 }
 
 # Запуск приложения Shiny

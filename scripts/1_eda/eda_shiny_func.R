@@ -7,8 +7,6 @@ library(FactoMineR)
 library(ggfortify)
 library(plotly)
 
-# Установление рабочей директории
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 eda_shiny <- function(data) {
   

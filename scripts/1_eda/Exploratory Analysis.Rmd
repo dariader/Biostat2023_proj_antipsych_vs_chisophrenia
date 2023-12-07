@@ -24,10 +24,6 @@ library(openxlsx)
 library(shiny)
 library(kableExtra)
 library(broom)
-
-# установление рабочей директории
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-#setwd(getSrcDirectory(function(x) {x}))
 ```
 
 ## EDA
@@ -287,7 +283,7 @@ eda_shiny(data_filtered)
 
 Исследуем изменение количественных переменных между визитами используя:
 
-- Тест Шапиро-Уилка для определение нормальности распределения. Укажемв normality_result.
+- Тест Шапиро-Уилка для определение нормальности распределения. Укажем в normality_result.
 
 - t-тест для зависимых выборок (paired=TRUE, $\alpha = 0.05$). Укажем значимость в t_significant_flag. 
 
@@ -402,6 +398,7 @@ difference_df
 ```
 
 
+
 Как лучше визуализировать? может быть так:
 
 ```{r}
@@ -441,6 +438,7 @@ lm(`Comp Z_dif` ~ `Total score SAS_dif` + `Total score PANSS_dif`, data=differen
 lm(`Comp Z_dif` ~ `Total score SAS_dif`, data=difference_df) %>% 
   summary()
 ```
+
 Теперь попробуем построить сложную модель, пусть функция step разбирается.
 ```{r}
 # уберем линейно зависимые переменные
@@ -480,6 +478,10 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %>%
   step() %>% 
   summary()
 ```
+```{r}
+data_filtered %>% colnames()
+```
+
 Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:  0.4149,	Adjusted R-squared:  0.3109).
 
 Эта же модель с подробным описанием.
@@ -493,6 +495,11 @@ results <- bind_cols(tidy_results, glance_results)
 results %>%
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
+```
+```{r}
+lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
+     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %>% 
+  summary()
 ```
 
 

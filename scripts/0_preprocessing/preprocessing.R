@@ -104,7 +104,7 @@ preprocessing <- function(filename, output='../_misc/') {
   
   data <- data %>% mutate(
     `Comp Z` = round(rowSums(select(., ZVM:ZToL))/ 3.96, 2))
-
+  
   # Расчет пятифакторной модели шищофрении по PANSS [Lindenmayer, J. P., Bernstein-Hyman, R., & Grochowski, S. (1994). A new five factor model of schizophrenia. The Psychiatric quarterly, 65(4), 299–322. https://doi.org/10.1007/BF02354306]
   data <- data %>% mutate(
     negative = N2 + N4 + N6 + N3 + N1 + G16,
@@ -113,7 +113,7 @@ preprocessing <- function(filename, output='../_misc/') {
     positive = P1 + G9 + P5 + P6,
     depression = G2 + G3 + G6 + G1 + G15
   )
-
+  
   # Расчет эквивалентов суточных доз антипсихотиков к 100 мг перорального хлорпромазина [Leucht, S., Samara, M., Heres, S., & Davis, J. M. (2016). Dose Equivalents for Antipsychotic Drugs: The DDD Method. Schizophrenia bulletin, 42 Suppl 1(Suppl 1), S90–S94. https://doi.org/10.1093/schbul/sbv167]
   data <- data %>%
     mutate(`antipsychotic dose` = as.numeric(gsub(",", ".", `antipsychotic dose`)),
@@ -130,7 +130,7 @@ preprocessing <- function(filename, output='../_misc/') {
            )) %>%
     mutate(CPZE = round(CPZE, 2),
            `antipsychotic dose` = as.factor(`antipsychotic dose`))
-
+  
   # создание полного имени выходного файла
   output <- '../_misc/'
   filename <- "../../data/Data_SAS.xlsx"

@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-12-02" />
+<meta name="date" content="2023-12-07" />
 
 <title>Dag</title>
 
@@ -350,7 +350,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">Dag</h1>
-<h4 class="date">2023-12-02</h4>
+<h4 class="date">2023-12-07</h4>
 
 </div>
 
@@ -529,7 +529,6 @@ plot(dag)</code></pre>
         NEGATIVE_SYMPTOMS = 4)
 )
 
-
 # Создание DAG
 dag &lt;- ggdag::dagify(
   EXTRAPYRAMIDAL_SYMPTOMS ~  ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA + DEPRESSION + NEGATIVE_SYMPTOMS,
@@ -541,8 +540,6 @@ dag &lt;- ggdag::dagify(
   outcome = &quot;COGNITIVE_FUNCTIONS&quot;,
   coords = coords
 )
-
-
 
 # Визуализация DAG с ggplot2
 ggdag(dag, text_size = 2) +

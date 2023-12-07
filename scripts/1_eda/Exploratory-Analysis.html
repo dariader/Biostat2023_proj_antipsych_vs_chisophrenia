@@ -941,7 +941,7 @@ data_filtered &lt;- preprocessing(&quot;../../data/Data_SAS.xlsx&quot;)</code></
   glimpse()</code></pre>
 <pre class="r"><code>#data_filtered %&gt;% 
 # summary()</code></pre>
-<p>Eda с помощью Shiny</p>
+<p>EDA с помощью Shiny</p>
 <pre class="r"><code>source(&quot;../../scripts/1_eda/eda_shiny_func.R&quot;)
 eda_shiny(data_filtered)</code></pre>
 </div>
@@ -951,7 +951,7 @@ eda_shiny(data_filtered)</code></pre>
 используя:</p>
 <ul>
 <li><p>Тест Шапиро-Уилка для определение нормальности распределения.
-Укажемв normality_result.</p></li>
+Укажем в normality_result.</p></li>
 <li><p>t-тест для зависимых выборок (paired=TRUE, <span class="math inline">\(\alpha = 0.05\)</span>). Укажем значимость в
 t_significant_flag.</p></li>
 <li><p>тест Уилкоксона для парных данных (<span class="math inline">\(\alpha = 0.05\)</span>). Укажем значимость в
@@ -4406,6 +4406,45 @@ lm(`Comp Z_dif` ~ ., data = selected_data) %&gt;%
 ## Residual standard error: 4.512 on 45 degrees of freedom
 ## Multiple R-squared:  0.4149, Adjusted R-squared:  0.3109 
 ## F-statistic: 3.989 on 8 and 45 DF,  p-value: 0.001216</code></pre>
+<pre class="r"><code>data_filtered %&gt;% colnames()</code></pre>
+<pre><code>##  [1] &quot;id&quot;                            &quot;gender&quot;                       
+##  [3] &quot;age&quot;                           &quot;disease duration&quot;             
+##  [5] &quot;antipsychotic&quot;                 &quot;antipsychotic dose&quot;           
+##  [7] &quot;antipsychotic generation&quot;      &quot;THF dose&quot;                     
+##  [9] &quot;course&quot;                        &quot;education&quot;                    
+## [11] &quot;smoke&quot;                         &quot;visit&quot;                        
+## [13] &quot;gait&quot;                          &quot;arm dropping&quot;                 
+## [15] &quot;shoulder shaking&quot;              &quot;elbow rigidity&quot;               
+## [17] &quot;wrist rigidity&quot;                &quot;head rotation&quot;                
+## [19] &quot;glabella tap&quot;                  &quot;tremor&quot;                       
+## [21] &quot;salivation&quot;                    &quot;akathisia&quot;                    
+## [23] &quot;Total score SAS&quot;               &quot;P1&quot;                           
+## [25] &quot;P2&quot;                            &quot;P3&quot;                           
+## [27] &quot;P4&quot;                            &quot;P5&quot;                           
+## [29] &quot;P6&quot;                            &quot;P7&quot;                           
+## [31] &quot;Positive scale&quot;                &quot;N1&quot;                           
+## [33] &quot;N2&quot;                            &quot;N3&quot;                           
+## [35] &quot;N4&quot;                            &quot;N5&quot;                           
+## [37] &quot;N6&quot;                            &quot;N7&quot;                           
+## [39] &quot;Negative scale&quot;                &quot;G1&quot;                           
+## [41] &quot;G2&quot;                            &quot;G3&quot;                           
+## [43] &quot;G4&quot;                            &quot;G5&quot;                           
+## [45] &quot;G6&quot;                            &quot;G7&quot;                           
+## [47] &quot;G8&quot;                            &quot;G9&quot;                           
+## [49] &quot;G10&quot;                           &quot;G11&quot;                          
+## [51] &quot;G12&quot;                           &quot;G13&quot;                          
+## [53] &quot;G14&quot;                           &quot;G15&quot;                          
+## [55] &quot;G16&quot;                           &quot;General Psychopathology scale&quot;
+## [57] &quot;Total score PANSS&quot;             &quot;Verbal Memory&quot;                
+## [59] &quot;ZVM&quot;                           &quot;Digit Sequencing&quot;             
+## [61] &quot;ZDS&quot;                           &quot;Token Motor Task&quot;             
+## [63] &quot;ZMT&quot;                           &quot;Verbal Fluency&quot;               
+## [65] &quot;ZVF&quot;                           &quot;Symbol Coding&quot;                
+## [67] &quot;ZSC&quot;                           &quot;Tower of London&quot;              
+## [69] &quot;ZToL&quot;                          &quot;Comp Z&quot;                       
+## [71] &quot;negative&quot;                      &quot;excitment&quot;                    
+## [73] &quot;cognitive&quot;                     &quot;positive&quot;                     
+## [75] &quot;depression&quot;                    &quot;CPZE&quot;</code></pre>
 <p>Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:
 0.4149, Adjusted R-squared: 0.3109).</p>
 <p>Эта же модель с подробным описанием.</p>
@@ -4834,6 +4873,37 @@ depression_dif
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
+     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %&gt;% 
+  summary()</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = `Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + 
+##     `wrist rigidity_dif` + salivation_dif + `Total score SAS_dif` + 
+##     `Total score PANSS_dif` + cognitive_dif + depression_dif, 
+##     data = selected_data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -9.2110 -2.3330  0.0145  2.4296  8.9540 
+## 
+## Coefficients:
+##                         Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept)               2.0609     1.9455   1.059  0.29510   
+## `shoulder shaking_dif`    3.4828     1.3864   2.512  0.01566 * 
+## `elbow rigidity_dif`     -2.9103     1.3732  -2.119  0.03961 * 
+## `wrist rigidity_dif`     -7.1532     3.6140  -1.979  0.05392 . 
+## salivation_dif            2.9768     1.3215   2.253  0.02921 * 
+## `Total score SAS_dif`    -1.0403     0.4135  -2.516  0.01551 * 
+## `Total score PANSS_dif`  -0.3558     0.1391  -2.558  0.01398 * 
+## cognitive_dif             1.1201     0.4040   2.773  0.00806 **
+## depression_dif            1.0274     0.3528   2.912  0.00557 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 4.512 on 45 degrees of freedom
+## Multiple R-squared:  0.4149, Adjusted R-squared:  0.3109 
+## F-statistic: 3.989 on 8 and 45 DF,  p-value: 0.001216</code></pre>
 </div>
 </div>
 
