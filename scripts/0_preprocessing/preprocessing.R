@@ -1,3 +1,12 @@
+# Список библиотек для установки, если их нет
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx")
+
+# Проверка и установка библиотек
+for (library_name in libraries_to_install) {
+  if (!requireNamespace(library_name, quietly = TRUE)) {
+    install.packages(library_name, dependencies = TRUE)
+  }
+}
 
 library(tidyverse)
 library(ggplot2)
