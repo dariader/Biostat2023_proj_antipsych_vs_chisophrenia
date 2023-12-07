@@ -1,3 +1,14 @@
+# Список библиотек для установки, если их нет
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", 
+                          "shiny", "FactoMineR", "ggfortify", "plotly")
+
+# Проверка и установка библиотек
+for (library_name in libraries_to_install) {
+  if (!requireNamespace(library_name, quietly = TRUE)) {
+    install.packages(library_name, dependencies = TRUE)
+  }
+}
+
 library(tidyverse)
 library(ggplot2)
 library(writexl)
@@ -6,8 +17,6 @@ library(shiny)
 library(FactoMineR)
 library(ggfortify)
 library(plotly)
-
-
 source('scripts/0_preprocessing/preprocessing.R')
 
 data_filtered <- preprocessing('data/Data_SAS.xlsx','scripts/_misc/Data_SAS_fixed.xlsx')

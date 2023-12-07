@@ -118,7 +118,6 @@ coords <- list(
         NEGATIVE_SYMPTOMS = 4)
 )
 
-
 # Создание DAG
 dag <- ggdag::dagify(
   EXTRAPYRAMIDAL_SYMPTOMS ~  ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA + DEPRESSION + NEGATIVE_SYMPTOMS,
@@ -131,14 +130,10 @@ dag <- ggdag::dagify(
   coords = coords
 )
 
-
-
 # Визуализация DAG с ggplot2
 ggdag(dag, text_size = 2) +
   theme_dag() +
   theme_minimal()
-  
-
 ```
 
 ```{r}

@@ -6,6 +6,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
 # Список библиотек для установки, если их нет
 libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom")
 
@@ -15,6 +16,7 @@ for (library_name in libraries_to_install) {
     install.packages(library_name, dependencies = TRUE)
   }
 }
+
 library(tidyverse)
 library(ggplot2)
 library(writexl)
@@ -22,6 +24,7 @@ library(openxlsx)
 library(shiny)
 library(kableExtra)
 library(broom)
+
 # установление рабочей директории
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 #setwd(getSrcDirectory(function(x) {x}))
@@ -274,7 +277,7 @@ data_filtered %>%
 ```
 
 
-Eda с помощью Shiny
+EDA с помощью Shiny
 
 ```{r eval=FALSE}
 source("../../scripts/1_eda/eda_shiny_func.R")
