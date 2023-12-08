@@ -13,7 +13,8 @@ library(ggplot2)
 library(writexl)
 library(openxlsx)
 
-preprocessing <- function(filename, output='../_misc/') {
+output <- here("scripts/_misc", "Data_SAS_fixed.xlsx")
+preprocessing <- function(filename) {
   data <- readxl::read_xlsx(filename, sheet = 2)
   
   # Переводим числовые столбцы в числовой формат
@@ -141,16 +142,7 @@ preprocessing <- function(filename, output='../_misc/') {
     mutate(CPZE = round(CPZE, 2),
            `antipsychotic dose` = as.factor(`antipsychotic dose`))
   
-  # создание полного имени выходного файла
-  output <- '../_misc/'
-  filename <- "../../data/Data_SAS.xlsx"
-  base_name <- filename %>% 
-    tools::file_path_sans_ext() %>% 
-    basename()
-  out_path <- file.path(output, paste0(base_name, "_fixed.xlsx")) %>% 
-    normalizePath()
-  
   # запись в файл
-  write.xlsx(data, file = out_path, sheetName="data_filtered", append=TRUE)
+  write.xlsx(data, file = output, sheetName="data_filtered", append=TRUE)
   return(data)
 }
