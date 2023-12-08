@@ -507,15 +507,16 @@ results %>%
 
 Здесь можно поразвлекаться с моделями.
 ```{r}
-lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
-     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %>% 
+lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` +
+    salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + 
+    depression_dif, data=selected_data) %>% 
   summary()
 ```
 
 
 Другая модель.
 
-Исключим так же `Comp Z_dif`, но добавим ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif.
+Исключим так же `Comp Z_dif`, но добавим ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif, ZToL_dif, ZMT_dif.
 
 1. Предсказываем ZVM_dif. Используем функцию step().
 
@@ -584,7 +585,36 @@ lm(ZDS_dif ~ ., data=selected_data) %>%
 
 Multiple R-squared:  0.1164,	Adjusted R-squared:  0.08172 
 
+5. Предсказываем ZToL_dif. Используем функцию step().
 
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZToL_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZToL_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% summary()
+```
+Multiple R-squared:  0.2223,	Adjusted R-squared:  0.1588
+
+6. Предсказываем ZMT_dif. Используем функцию step().
+
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZMT_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZMT_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% summary()
+```
+
+Multiple R-squared:  0.4085,	Adjusted R-squared:  0.2536 
 
 
 
