@@ -388,6 +388,8 @@ difference_df
 ```{r}
 difference_df %>% str()
 ```
+ Визуализируем: 
+ 
 ```{r}
 difference_df %>%
   gather(variable, value, -id) %>%
@@ -403,6 +405,8 @@ difference_df %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+Тоже самое более кратко.
+
 ```{r}
 difference_df %>%
   gather(variable, value, -id) %>%
@@ -440,21 +444,26 @@ eda_shiny(difference_df)
 lm(`Comp Z_dif` ~ `Total score SAS_dif` + `Total score PANSS_dif`, data=difference_df) %>% 
   summary()
 ```
+
 Модель получается лучше, если оставить только `Total score SAS_dif`
+
 ```{r}
 lm(`Comp Z_dif` ~ `Total score SAS_dif`, data=difference_df) %>% 
   summary()
 ```
 
-Теперь попробуем построить сложную модель, пусть функция step разбирается.
+Теперь попробуем построить сложную модель, пусть функция step разбирается. Установим trace=0, чтобы увидеть только последнюю модель.
+
 ```{r}
 # уберем линейно зависимые переменные
 selected_data <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
          -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'))
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
+  step(trace=0) %>%
   summary()
 ```
+
 Исключим так же `Verbal Memory`, `Digit Sequencing`, `Token Motor Task`, `Verbal Fluency`, `Symbol Coding`, `Tower of London`.
 
 ```{r}
@@ -465,7 +474,7 @@ selected_data <- difference_df %>%
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data=selected_data) %>% 
-  step() %>% 
+  step(trace=0) %>% 
   summary()
 ```
 Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
@@ -478,7 +487,7 @@ selected_data <- difference_df %>%
          -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
 
 lm(`Comp Z_dif` ~ ., data = selected_data) %>% 
-  step() %>% 
+  step(trace=0) %>% 
   summary()
 ```
 Модель объясняет примерно 41.49% дисперсии (Multiple R-squared:  0.4149,	Adjusted R-squared:  0.3109).
@@ -502,6 +511,80 @@ lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidit
      `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %>% 
   summary()
 ```
+
+
+Другая модель.
+
+Исключим так же `Comp Z_dif`, но добавим ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif.
+
+1. Предсказываем ZVM_dif. Используем функцию step().
+
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZVM_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% 
+  summary()
+```
+
+Multiple R-squared:  0.09264,	Adjusted R-squared:  0.05706
+
+2. Предсказываем ZSC_dif. Используем функцию step().
+
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZSC_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZSC_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% 
+  summary()
+```
+
+Multiple R-squared:  0.1565,	Adjusted R-squared:  0.1234 
+
+3. Предсказываем ZVF_dif. Используем функцию step().
+
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVF_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZVF_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% 
+  summary()
+```
+
+Multiple R-squared:  0.2015,	Adjusted R-squared:  0.1536 
+
+4. Предсказываем ZDS_dif. Используем функцию step().
+
+```{r}
+selected_data <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZDS_dif) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
+  select(-`Comp Z_dif`)
+
+lm(ZDS_dif ~ ., data=selected_data) %>% 
+  step(trace=0) %>% summary()
+```
+
+Multiple R-squared:  0.1164,	Adjusted R-squared:  0.08172 
+
+
 
 
 
