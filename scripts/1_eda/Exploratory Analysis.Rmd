@@ -358,19 +358,6 @@ significant_variables %>%
   kable_styling("striped", full_width = FALSE)
 ```
 
-Построим боксплоты для значимых переменных со значимыми различиями между визитами.
-```{r}
-# Строим боксплоты
-for (variable in significant_variables$Variable) {
-  p <- ggplot(data_filtered, aes(x = visit, y = !!sym(variable), fill = visit)) +
-    geom_boxplot() +
-    labs(title = paste("Boxplot for", variable),
-         x = "Visit",
-         y = variable)
-  print(p)
-}
-```
-
 Создадим датафрейм, содержащие разницу количественных показателей между визитами.
 
 ```{r}
@@ -398,34 +385,52 @@ difference_df <- data_filtered %>%
 difference_df
 ```
 
-
-
-Как лучше визуализировать? может быть так:
-
 ```{r}
-ggplot(difference_df, aes(x = id, y = `Total score SAS_dif`)) +
-  geom_point() +
-  labs(title = "Относительная разница между визитами", x = "ID", y = 'gait') + 
-  theme_minimal()
+difference_df %>% str()
 ```
-Или вот так:
-
 ```{r}
-ggplot(difference_df, aes(x = `Total score SAS_dif`)) +
-  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
-  labs(title = "Гистограмма относительной разницы между визитами Total score SAS", x = "Значение переменной", y = "Частота") + 
-  theme_minimal()
+difference_df %>%
+  gather(variable, value, -id) %>%
+  group_by(variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>%
+  filter(grepl("_dif$", variable)) %>%
+  mutate(variable = gsub("_dif$", "", variable)) %>%
+  ggplot(aes(x = variable, y = mean_value)) +
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Средние отклонение переменных",
+       x = "Переменные",
+       y = "Среднее отклонение") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+```{r}
+difference_df %>%
+  gather(variable, value, -id) %>%
+  filter(!grepl("G[1-9]|N[1-7]|P[1-7]_dif$", variable)) %>%
+  group_by(variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>%
+  filter(grepl("_dif$", variable)) %>%
+  mutate(variable = gsub("_dif$", "", variable)) %>%
+  ggplot(aes(x = variable, y = mean_value, fill = factor(sign(mean_value)))) +
+  geom_bar(stat = "identity", color = "black") +
+  scale_fill_manual(values = c("blue", "gray", "red"), name = "Знак", labels = c("Отрицательное", "Ноль", "Положительное")) +
+  labs(title = "Средние отклонение переменных",
+       x = "Переменные",
+       y = "Среднее отклонение") +
+  theme_minimal() +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
-А может быть shiny прикрутить, для всего этого?
+EDA difference_df в shiny доступна только для числовых переменнных.
+
 Доступна только вкладка "Числовые переменные" без разбития по visit.
+
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(difference_df)
 ```
-
-Или что то другое...
 
 ## Строим модель
 
@@ -491,7 +496,7 @@ results %>%
   kable_styling("striped", full_width = FALSE)
 ```
 
-Здесь можно поразвлекаться с моделями
+Здесь можно поразвлекаться с моделями.
 ```{r}
 lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
      `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %>% 
