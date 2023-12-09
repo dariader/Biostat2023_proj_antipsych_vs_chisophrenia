@@ -1,5 +1,5 @@
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "here")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -12,6 +12,7 @@ library(tidyverse)
 library(ggplot2)
 library(writexl)
 library(openxlsx)
+library(here)
 
 output <- here("scripts/_misc", "Data_SAS_fixed.xlsx")
 preprocessing <- function(filename) {

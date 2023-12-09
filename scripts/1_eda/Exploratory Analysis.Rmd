@@ -513,7 +513,6 @@ lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidit
   summary()
 ```
 
-
 Другая модель.
 
 Исключим так же `Comp Z_dif`, но добавим ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif, ZToL_dif, ZMT_dif.

@@ -10,7 +10,7 @@
 
 
 
-<meta name="date" content="2023-12-08" />
+<meta name="date" content="2023-12-09" />
 
 <title>EDA</title>
 
@@ -574,7 +574,7 @@ display: none;
 
 
 <h1 class="title toc-ignore">EDA</h1>
-<h4 class="date">2023-12-08</h4>
+<h4 class="date">2023-12-09</h4>
 
 </div>
 
@@ -4529,8 +4529,9 @@ depression_dif
 </tbody>
 </table>
 <p>Здесь можно поразвлекаться с моделями.</p>
-<pre class="r"><code>lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` + salivation_dif +
-     `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + depression_dif, data=selected_data) %&gt;% 
+<pre class="r"><code>lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidity_dif` +
+    salivation_dif + `Total score SAS_dif` + `Total score PANSS_dif` + cognitive_dif + 
+    depression_dif, data=selected_data) %&gt;% 
   summary()</code></pre>
 <pre><code>## 
 ## Call:
@@ -4562,7 +4563,7 @@ depression_dif
 ## F-statistic: 3.989 on 8 and 45 DF,  p-value: 0.001216</code></pre>
 <p>Другая модель.</p>
 <p>Исключим так же <code>Comp Z_dif</code>, но добавим ZVM_dif, ZSC_dif,
-ZVF_dif, ZDS_dif.</p>
+ZVF_dif, ZDS_dif, ZToL_dif, ZMT_dif.</p>
 <ol style="list-style-type: decimal">
 <li>Предсказываем ZVM_dif. Используем функцию step().</li>
 </ol>
@@ -4698,6 +4699,85 @@ lm(ZDS_dif ~ ., data=selected_data) %&gt;%
 ## Multiple R-squared:  0.1164, Adjusted R-squared:  0.08172 
 ## F-statistic: 3.358 on 2 and 51 DF,  p-value: 0.04265</code></pre>
 <p>Multiple R-squared: 0.1164, Adjusted R-squared: 0.08172</p>
+<ol start="5" style="list-style-type: decimal">
+<li>Предсказываем ZToL_dif. Используем функцию step().</li>
+</ol>
+<pre class="r"><code>selected_data &lt;- difference_df %&gt;% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with(&#39;N&#39;), -starts_with(&#39;P&#39;), -starts_with(&#39;G&#39;), -starts_with(&#39;Z&#39;), ZToL_dif) %&gt;% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %&gt;% 
+  select(-`Comp Z_dif`)
+
+lm(ZToL_dif ~ ., data=selected_data) %&gt;% 
+  step(trace=0) %&gt;% summary()</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ZToL_dif ~ `wrist rigidity_dif` + tremor_dif + akathisia_dif + 
+##     `Total score SAS_dif`, data = selected_data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -2.4880 -0.6978 -0.1073  0.7233  2.9755 
+## 
+## Coefficients:
+##                       Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)            0.10726    0.19142   0.560   0.5778  
+## `wrist rigidity_dif`   1.49325    0.86392   1.728   0.0902 .
+## tremor_dif             0.52036    0.28743   1.810   0.0764 .
+## akathisia_dif         -0.56234    0.24482  -2.297   0.0259 *
+## `Total score SAS_dif` -0.12416    0.08653  -1.435   0.1577  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.21 on 49 degrees of freedom
+## Multiple R-squared:  0.2223, Adjusted R-squared:  0.1588 
+## F-statistic: 3.502 on 4 and 49 DF,  p-value: 0.01362</code></pre>
+<p>Multiple R-squared: 0.2223, Adjusted R-squared: 0.1588</p>
+<ol start="6" style="list-style-type: decimal">
+<li>Предсказываем ZMT_dif. Используем функцию step().</li>
+</ol>
+<pre class="r"><code>selected_data &lt;- difference_df %&gt;% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with(&#39;N&#39;), -starts_with(&#39;P&#39;), -starts_with(&#39;G&#39;), -starts_with(&#39;Z&#39;), ZMT_dif) %&gt;% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %&gt;% 
+  select(-`Comp Z_dif`)
+
+lm(ZMT_dif ~ ., data=selected_data) %&gt;% 
+  step(trace=0) %&gt;% summary()</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = ZMT_dif ~ age + `disease duration` + `THF dose` + 
+##     `arm dropping_dif` + `shoulder shaking_dif` + `elbow rigidity_dif` + 
+##     `wrist rigidity_dif` + tremor_dif + salivation_dif + akathisia_dif + 
+##     `Total score PANSS_dif`, data = selected_data)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -1.5941 -0.6173 -0.1673  0.5403  2.4410 
+## 
+## Coefficients:
+##                         Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept)              1.84581    0.65599   2.814  0.00742 **
+## age                     -0.03463    0.01929  -1.795  0.07984 . 
+## `disease duration`       0.04116    0.02694   1.528  0.13410   
+## `THF dose`              -0.08122    0.05708  -1.423  0.16218   
+## `arm dropping_dif`      -1.03402    0.41881  -2.469  0.01770 * 
+## `shoulder shaking_dif`   0.72888    0.26387   2.762  0.00848 **
+## `elbow rigidity_dif`    -0.39473    0.29701  -1.329  0.19102   
+## `wrist rigidity_dif`    -1.03727    0.72638  -1.428  0.16069   
+## tremor_dif              -0.76170    0.21890  -3.480  0.00118 **
+## salivation_dif           0.39045    0.26026   1.500  0.14103   
+## akathisia_dif           -0.27063    0.20378  -1.328  0.19133   
+## `Total score PANSS_dif`  0.02609    0.01795   1.454  0.15349   
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.945 on 42 degrees of freedom
+## Multiple R-squared:  0.4085, Adjusted R-squared:  0.2536 
+## F-statistic: 2.637 on 11 and 42 DF,  p-value: 0.01167</code></pre>
+<p>Multiple R-squared: 0.4085, Adjusted R-squared: 0.2536</p>
 </div>
 </div>
 
