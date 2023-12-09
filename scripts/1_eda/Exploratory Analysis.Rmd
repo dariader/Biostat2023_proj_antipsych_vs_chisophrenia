@@ -615,6 +615,31 @@ lm(ZMT_dif ~ ., data=selected_data) %>%
 
 Multiple R-squared:  0.4085,	Adjusted R-squared:  0.2536 
 
+## Разбиваем на группы
+
+```{r}
+difference_df <- data %>%
+  filter(visit %in% c('1', '2')) %>%
+  group_by(id) %>%
+  mutate(
+    percentage_change = ((as.numeric(`Total score PANSS`[visit == '1']) - as.numeric(`Total score PANSS`[visit == '2'])) / as.numeric(`Total score PANSS`[visit == '1'])) * 100
+  )
+
+difference_df <- difference_df %>% 
+  mutate(
+  treat_resp = case_when(
+    percentage_change < 15 ~ 0, #. неответившие на терапию
+    percentage_change >= 15 & percentage_change <= 20 ~ 1, # с недостаточным ответом
+    percentage_change > 20 ~ 2, # ответившие на терапию
+    TRUE ~ NA_real_
+  )
+)
+difference_df %>% 
+  ggplot() + 
+  aes(treat_resp) +
+  geom_histogram(binwidth = 1) +
+  theme_minimal()
+```
 
 
 
