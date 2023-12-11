@@ -133,6 +133,12 @@ eda_shiny <- function(data) {
 
     output$corr <- renderPlotly({
       select_corr <- input$select_corr
+      # Define a regular expression pattern for items to exclude
+      pattern_to_exclude <- "^(G|N|P)[0-9]+$"
+
+      # Use grep to select items that do not match the pattern
+      selected_items <- numeric_variables[!grepl(pattern_to_exclude, numeric_variables)]
+
       if(select_corr %in% 'all'){
         corr_data <- data
       }
@@ -147,7 +153,7 @@ eda_shiny <- function(data) {
         add_df <- data %>%
           filter(visit == 1) %>%
           select(id, age, `disease duration`, `THF dose`, CPZE)
-        selected_variables <- numeric_variables
+        selected_variables <- selected_items
         corr_data <- data %>%
       select(id, visit, all_of(selected_variables)) %>%
       group_by(id) %>%
@@ -159,29 +165,7 @@ eda_shiny <- function(data) {
              )
       }
 
-      data_num <- corr_data[,c(numeric_variables)]
-      #data_num[factor_columns] <- lapply(corr_data[factor_columns], as.integer)
-      # cor_matrix <- cor(data_num)
-      #
-      # # Create a correlation plot using plot_ly
-      # plot <- plot_ly(
-      #   x = colnames(cor_matrix),
-      #   y = colnames(cor_matrix),
-      #   z = cor_matrix,
-      #   type = "heatmap",
-      #   colorscale = "Vulcano",
-      #   colorbar = list(title = "Correlation")
-      # )
-      #
-      # # Customize layout
-      # layout <- list(
-      #   title = "Correlation Plot",
-      #   xaxis = list(title = ""),
-      #   yaxis = list(title = "")
-      # )
-      #
-      # # Combine plot and layout
-      # cor_plot <- layout(plot, layout)
+      data_num <- corr_data[,c(selected_items)]
 
       # Assuming cor_matrix is your correlation matrix and clusters is the result of hierarchical clustering
       cor_matrix <- cor(data_num)
