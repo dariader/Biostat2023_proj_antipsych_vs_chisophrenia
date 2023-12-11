@@ -274,8 +274,8 @@ data_filtered <- preprocessing(path)
 ## EDA - исправленные данные
 
 ```{r}
-data_filtered %>% 
- glimpse()
+# data_filtered %>%
+#  glimpse()
 ```
 
 

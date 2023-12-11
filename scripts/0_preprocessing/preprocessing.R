@@ -17,7 +17,7 @@ library(here)
 output <- here("scripts/_misc", "Data_SAS_fixed.xlsx")
 preprocessing <- function(filename) {
   data <- readxl::read_xlsx(filename, sheet = 2)
-  
+  data$'antipsychotic generation' <- sub("\\.0$", "", data$'antipsychotic generation')
   # Переводим числовые столбцы в числовой формат
   numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
                        "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
@@ -39,8 +39,7 @@ preprocessing <- function(filename) {
   })
   
   data[factor_columns] <- lapply(data[factor_columns], as.factor)
-  
-  
+
   data <- data %>%
     mutate(`Total score SAS` = rowSums(select(., gait:akathisia)),
            `Positive scale` = rowSums(select(., P1:P7)),
