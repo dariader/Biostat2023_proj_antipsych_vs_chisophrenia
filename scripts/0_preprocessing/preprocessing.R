@@ -15,7 +15,7 @@ library(openxlsx)
 library(here)
 
 output <- here("scripts/_misc", "Data_SAS_fixed.xlsx")
-preprocessing <- function(filename, output) {
+preprocessing <- function(filename) {
   data <- readxl::read_xlsx(filename, sheet = 2)
   
   # Переводим числовые столбцы в числовой формат
