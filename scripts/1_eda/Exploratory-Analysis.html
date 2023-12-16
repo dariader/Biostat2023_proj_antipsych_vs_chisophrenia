@@ -6605,19 +6605,19 @@ lm(`Comp Z` ~ ., data=selected_data) %&gt;%
 <p>Для обоих визитов:</p>
 <pre class="r"><code>path &lt;- here(&quot;scripts/1_eda&quot;, &quot;lm_shiny.R&quot;)
 source(path)
-lm_shiny(data_filtered)</code></pre>
+lm_shiny(data_filtered %&gt;% select(!matches(&quot;P\\d{1}&quot;) &amp; !matches(&quot;N\\d{1}&quot;) &amp; !matches(&quot;G\\d{1}&quot;)))</code></pre>
 <p>Для первого визита:</p>
 <pre class="r"><code>path &lt;- here(&quot;scripts/1_eda&quot;, &quot;lm_shiny.R&quot;)
 source(path)
-lm_shiny(data_filtered %&gt;% filter(visit==1))</code></pre>
+lm_shiny(data_filtered %&gt;% filter(visit==1) %&gt;% select(!matches(&quot;P\\d{1}&quot;) &amp; !matches(&quot;N\\d{1}&quot;) &amp; !matches(&quot;G\\d{1}&quot;)))</code></pre>
 <p>Для второго визита:</p>
 <pre class="r"><code>path &lt;- here(&quot;scripts/1_eda&quot;, &quot;lm_shiny.R&quot;)
 source(path)
-lm_shiny(data_filtered %&gt;% filter(visit==2))</code></pre>
+lm_shiny(data_filtered %&gt;% filter(visit==2) %&gt;% select(!matches(&quot;P\\d{1}&quot;) &amp; !matches(&quot;N\\d{1}&quot;) &amp; !matches(&quot;G\\d{1}&quot;)))</code></pre>
 <p>Для разницы между визитами:</p>
 <pre class="r"><code>path &lt;- here(&quot;scripts/1_eda&quot;, &quot;lm_shiny.R&quot;)
 source(path)
-lm_shiny(difference_df)</code></pre>
+lm_shiny(difference_df %&gt;% select(!matches(&quot;P\\d{1}&quot;) &amp; !matches(&quot;N\\d{1}&quot;) &amp; !matches(&quot;G\\d{1}&quot;)))</code></pre>
 </div>
 </div>
 </div>

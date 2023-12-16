@@ -1,17 +1,17 @@
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("shiny", "lmtest", "car", "broom", 
-                          "here")
+libraries_to_install <- c("shiny", "lmtest", "car", "broom", "here", "knitr")
 
 # Подключение библиотек
+install.packages(setdiff(libraries_to_install, rownames(installed.packages())))
 library(shiny)
 library(lmtest)
 library(car)
 library(broom)
 library(here)
-
+library(knitr)
 
 lm_shiny <- function(data_path) {
-
+  
   data_filtered <- data_path
   
   # Замена пробелов в названиях переменных подчеркиванием
@@ -72,11 +72,13 @@ lm_shiny <- function(data_path) {
       lm(formula_str, data = data_filtered)
     })
     
-    # Вывод результатов линейной регрессии с использованием tidy
+    # Вывод результатов линейной регрессии с использованием tidy и kable
     output$regression_table <- renderTable({
       tidy_table <- tidy(regression_model())
-      tidy_table
-    })
+      kable(tidy_table, "html", align = "c", escape = FALSE) %>%
+        kable_styling("striped", full_width = FALSE) %>%
+        row_spec(which(tidy_table$p.value < 0.05), background = "#99FF99")  # Задайте цвет для значимых строк
+    }, sanitize.text.function = function(x) x)
     
     # Вывод R-квадрата
     output$r_squared_value <- renderText({
@@ -107,4 +109,3 @@ lm_shiny <- function(data_path) {
   # Запуск Shiny-приложения
   shinyApp(ui = ui, server = server)
 }
-
