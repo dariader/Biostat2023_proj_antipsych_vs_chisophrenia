@@ -286,6 +286,16 @@ path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
 ```
+lm с помощью Shiny
+
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "lm_shiny.R")
+source(path)
+eda_shiny(data_filtered)
+```
+```{r}
+data_filtered %>% str()
+```
 
 
 # Динамика

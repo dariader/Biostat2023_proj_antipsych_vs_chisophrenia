@@ -19,7 +19,6 @@ library(ggfortify)
 library(plotly)
 library(ggpubr)
 
-
 eda_shiny <- function(data) {
   
   # Категориальные переменные
@@ -144,24 +143,6 @@ eda_shiny <- function(data) {
       
       print(gg)
     })
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
