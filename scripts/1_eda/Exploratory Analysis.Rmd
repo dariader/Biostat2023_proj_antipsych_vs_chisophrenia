@@ -286,13 +286,6 @@ path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
 ```
-lm с помощью Shiny
-
-```{r eval=FALSE}
-path <- here("scripts/1_eda", "lm_shiny.R")
-source(path)
-eda_shiny(data_filtered)
-```
 ```{r}
 data_filtered %>% str()
 ```
@@ -746,3 +739,38 @@ lm(`Comp Z` ~ ., data=selected_data) %>%
   step(trace=0) %>% summary()
 ```
 Multiple R-squared:  0.9186,	Adjusted R-squared:  0.608 
+
+
+lm с помощью Shiny можно запустить.
+
+Для обоих визитов:
+
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "lm_shiny.R")
+source(path)
+lm_shiny(data_filtered)
+```
+
+Для первого визита:
+
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "lm_shiny.R")
+source(path)
+lm_shiny(data_filtered %>% filter(visit==1))
+```
+
+Для второго визита:
+
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "lm_shiny.R")
+source(path)
+lm_shiny(data_filtered %>% filter(visit==2))
+```
+
+Для разницы между визитами:
+
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "lm_shiny.R")
+source(path)
+lm_shiny(difference_df)
+```
