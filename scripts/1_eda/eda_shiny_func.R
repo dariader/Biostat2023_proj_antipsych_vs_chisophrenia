@@ -1,6 +1,6 @@
 # Список библиотек для установки, если их нет
 libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", 
-                          "shiny", "FactoMineR", "ggfortify", "plotly")
+                          "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -17,6 +17,7 @@ library(shiny)
 library(FactoMineR)
 library(ggfortify)
 library(plotly)
+library(ggpubr)
 
 
 eda_shiny <- function(data) {
@@ -55,8 +56,10 @@ eda_shiny <- function(data) {
       tabPanel("Scatterplot",
                selectInput("scatter_x", "Выберите переменную по X", choices = numeric_variables),
                selectInput("scatter_y", "Выберите переменную по Y", choices = numeric_variables),
+               selectInput("correlation_method", "Correlation Method", choices = c("pearson", "spearman", "kendall"), selected = "pearson"),
                checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
                plotOutput("scatterplot")
+               
       )
     )
   )
@@ -92,7 +95,7 @@ eda_shiny <- function(data) {
       } else if (plot_type == "density") {
         gg <- gg + geom_density(fill = "skyblue")
       } else if (plot_type == "boxplot") {
-        gg <- gg + geom_boxplot(fill = "skyblue") + coord_flip()
+        gg <- gg + geom_boxplot(fill = "skyblue")
       }
       
       if (split_by_visit_num) {
@@ -101,11 +104,12 @@ eda_shiny <- function(data) {
       
       print(gg)
     })
-
+    
     output$scatterplot <- renderPlot({
       x_variable <- input$scatter_x
       y_variable <- input$scatter_y
       split_by_visit_scatter <- input$split_by_visit_scatter
+      correlation_method <- input$correlation_method
       
       gg <- ggplot(data, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
         geom_point(aes(col=gender, size=`antipsychotic generation`)) +
@@ -118,18 +122,49 @@ eda_shiny <- function(data) {
       if (split_by_visit_scatter) {
         gg <- gg + facet_wrap(~visit) +
           facet_grid(~visit) +
-          geom_text(data = data %>% group_by(visit) %>% summarize(cor = cor(!!as.symbol(x_variable), !!as.symbol(y_variable))),
-                    aes(label = paste("r: ", round(cor, 2))),
+          geom_text(data = data %>% group_by(visit) %>% 
+                      summarize(cor = cor(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method),
+                                p_value = cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$p.value,
+                                ci_low = if (correlation_method == "pearson") cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$conf.int[1] else NA,
+                                ci_high = if (correlation_method == "pearson") cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$conf.int[2] else NA),
+                    aes(label = paste("r: ", round(cor, 2), "\np-value: ", round(p_value, 4),
+                                      if (correlation_method == "pearson") paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]"))),
                     x = x_center, y = y_center, hjust = 0.5, vjust = 0.5, size = 8)
       } else {
-        correlation_coefficient <- cor(data[[x_variable]], data[[y_variable]])
+        cor_test_result <- cor.test(data[[x_variable]], data[[y_variable]], method = correlation_method)
+        correlation_coefficient <- cor_test_result$estimate
+        p_value <- cor_test_result$p.value
+        ci_low <- if (correlation_method == "pearson") cor_test_result$conf.int[1] else NA
+        ci_high <- if (correlation_method == "pearson") cor_test_result$conf.int[2] else NA
         gg <- gg + annotate("text", x = x_center, y = y_center,
-                            label = paste("r: ", round(correlation_coefficient, 2)),
+                            label = paste("r: ", round(correlation_coefficient, 2), "\np-value: ", round(p_value, 4),
+                                          if (correlation_method == "pearson") paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]")),
                             hjust = 0.5, vjust = 0.5, size = 8)
       }
       
       print(gg)
     })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     output$corr <- renderPlotly({
       select_corr <- input$select_corr

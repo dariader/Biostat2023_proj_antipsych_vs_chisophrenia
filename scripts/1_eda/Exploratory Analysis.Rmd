@@ -286,6 +286,8 @@ path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
 ```
+
+
 # Динамика
 
 Исследуем изменение количественных переменных между визитами используя:
