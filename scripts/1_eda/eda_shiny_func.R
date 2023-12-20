@@ -33,7 +33,7 @@ eda_shiny <- function(data) {
       tabPanel("Категориальные переменные",
                selectInput("cat_variable", "Выберите категориальную переменную", choices = categorical_variables),
                checkboxInput("split_by_visit", "Разбить по 'visit'", value = FALSE),
-               plotOutput("cat_barplot")
+               plotlyOutput("cat_barplot")
       ),
       tabPanel("Числовые переменные",
                selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
@@ -41,7 +41,7 @@ eda_shiny <- function(data) {
                radioButtons("plot_type", "Выберите тип графика:",
                             choices = c("Гистограмма" = "histogram", "Плотность" = "density", "Боксплот" = "boxplot"),
                             selected = "histogram"),
-               plotOutput("num_plot")
+               plotlyOutput("num_plot")
       ),
       # tabPanel("PCA",
       #          selectInput("pca_variable", "Выберите переменную для группировки", choices = categorical_variables),
@@ -50,6 +50,7 @@ eda_shiny <- function(data) {
       # ),
       tabPanel("Correlation",
                selectInput("select_corr", "Выберите визит", choices = c('all','1','2','difference')),
+               selectInput("select_generation", "Выберите генерацию", choices = c('all','1','2','3')),
                plotlyOutput("corr")
       ),
       tabPanel("Scatterplot",
@@ -58,58 +59,68 @@ eda_shiny <- function(data) {
                selectInput("correlation_method", "Correlation Method", choices = c("pearson", "spearman", "kendall"), selected = "pearson"),
                checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
                plotOutput("scatterplot")
-               
+
       )
     )
   )
   
   # Server для приложения Shiny
   server <- function(input, output) {
-    output$cat_barplot <- renderPlot({
-      variable <- input$cat_variable
-      split_by_visit <- input$split_by_visit
-      
-      gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
+    output$cat_barplot <- renderPlotly({
+    variable <- input$cat_variable
+    split_by_visit <- input$split_by_visit
+
+   gg <- ggplot(data, aes(x = !!as.symbol(variable), fill = !!as.symbol(variable))) +
         geom_bar() +
         labs(title = paste("Столбчатая диаграмма для", variable)) +
-        theme_minimal()
+        theme_minimal() +
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
       
       if (split_by_visit) {
         gg <- gg + facet_wrap(~visit)
       }
-      
-      print(gg)
-    }, height = 600, width = 800)
+
+    ggplotly(gg)
+  })
     
-    output$num_plot <- renderPlot({
+    output$num_plot <- renderPlotly({
       variable <- input$num_variable
       split_by_visit_num <- input$split_by_visit_num
       plot_type <- input$plot_type
-      
+
       gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
         labs(title = paste("График для", variable))
-      
+
       if (plot_type == "histogram") {
         gg <- gg + geom_histogram(fill = "skyblue", bins = 10)
       } else if (plot_type == "density") {
         gg <- gg + geom_density(fill = "skyblue")
       } else if (plot_type == "boxplot") {
-        gg <- gg + geom_boxplot(fill = "skyblue")
+        gg <- ggplot(data) +
+        labs(title = paste("График для", variable)) + geom_boxplot(aes(y = !!as.symbol(variable)), fill = "skyblue")
       }
-      
+
       if (split_by_visit_num) {
         gg <- gg + facet_wrap(~visit)
       }
-      
-      print(gg)
+
+      if (split_by_visit_num & plot_type == "boxplot"){
+        gg <-  ggplot(data, aes(x = visit, y = !!as.symbol(variable))) +
+          labs(title = paste("График для", variable)) +
+          geom_boxplot(fill = "skyblue")
+      }
+
+
+      ggplotly(gg)
     })
-    
+
     output$scatterplot <- renderPlot({
       x_variable <- input$scatter_x
       y_variable <- input$scatter_y
       split_by_visit_scatter <- input$split_by_visit_scatter
       correlation_method <- input$correlation_method
-      
+
       gg <- ggplot(data, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
         geom_point(aes(col=gender, size=`antipsychotic generation`)) +
         geom_smooth(method="lm", col = 'black') +
@@ -121,7 +132,7 @@ eda_shiny <- function(data) {
       if (split_by_visit_scatter) {
         gg <- gg + facet_wrap(~visit) +
           facet_grid(~visit) +
-          geom_text(data = data %>% group_by(visit) %>% 
+          geom_text(data = data %>% group_by(visit) %>%
                       summarize(cor = cor(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method),
                                 p_value = cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$p.value,
                                 ci_low = if (correlation_method == "pearson") cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$conf.int[1] else NA,
@@ -143,12 +154,13 @@ eda_shiny <- function(data) {
       
       print(gg)
     })
-    
-    
-    
+
+
+
 
     output$corr <- renderPlotly({
       select_corr <- input$select_corr
+      select_gen <- input$select_generation
       # Define a regular expression pattern for items to exclude
       pattern_to_exclude <- "^(G|N|P)[0-9]+$"
 
@@ -180,6 +192,16 @@ eda_shiny <- function(data) {
              CPZE = add_df$CPZE
              )
       }
+
+    if(select_gen %in% '1'){
+      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 1,]
+    }
+    if(select_gen %in% '2'){
+      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 2,]
+    }
+    if(select_gen %in% '3'){
+      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 3,]
+    }
 
       data_num <- corr_data[,c(selected_items)]
 
