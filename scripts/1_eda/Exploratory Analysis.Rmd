@@ -304,6 +304,35 @@ path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
 ```
+```{r}
+rez <- cor.test(data_filtered$age, data_filtered$`Total score PANSS`, method = "spearman")
+rez %>% str()
+
+cor = cor(data_filtered$age, data_filtered$`Total score PANSS`, method = "spearman")
+p_value = cor.test(data_filtered$age, data_filtered$`Total score PANSS`, method = "spearman")$p.value
+ci_low = spearman.ci(data_filtered$age, data_filtered$`Total score PANSS`)$conf.int[1] %>% as.numeric()
+ci_high = spearman.ci(data_filtered$age, data_filtered$`Total score PANSS`)$conf.int[2] %>% as.numeric()
+ci_high
+```
+
+```{r}
+x_variable <- 5
+y_variable <- 5
+correlation_method <- "Spearman"
+gg <- ggplot(data, aes(x = data_filtered$age, data_filtered$`Total score PANSS`)) +
+        geom_point(aes(col = gender, size = `antipsychotic generation`)) +
+        geom_smooth(method = "lm", col = 'black') +
+        labs(title = paste("Scatterplot для", x_variable, "и", y_variable),
+             subtitle = paste(correlation_method, "correlation")) +
+        theme_minimal()
+      
+      x_center <- mean(range(data[[x_variable]]))
+      y_center <- mean(range(data[[y_variable]]))
+gg <- gg + geom_text(aes(label = paste("Cor: ", round(cor, 2), "\np-value: ", round(p_value, 4),
+                                       paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]"))),
+                     x = x_center, y = y_center, hjust = 0.5, vjust = 0.5, size = 8)
+gg
+```
 
 
 # Динамика

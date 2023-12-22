@@ -1,6 +1,6 @@
 # Список библиотек для установки, если их нет
 libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", 
-                          "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr")
+                          "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr", "RVAideMemoire", "Hmisc")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -18,6 +18,8 @@ library(FactoMineR)
 library(ggfortify)
 library(plotly)
 library(ggpubr)
+library(RVAideMemoire)
+library(Hmisc)
 
 eda_shiny <- function(data) {
   
@@ -56,7 +58,6 @@ eda_shiny <- function(data) {
       tabPanel("Scatterplot",
                selectInput("scatter_x", "Выберите переменную по X", choices = numeric_variables),
                selectInput("scatter_y", "Выберите переменную по Y", choices = numeric_variables),
-               selectInput("correlation_method", "Correlation Method", choices = c("pearson", "spearman", "kendall"), selected = "pearson"),
                checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
                plotOutput("scatterplot")
 
@@ -119,8 +120,8 @@ eda_shiny <- function(data) {
       x_variable <- input$scatter_x
       y_variable <- input$scatter_y
       split_by_visit_scatter <- input$split_by_visit_scatter
-      correlation_method <- input$correlation_method
-
+      correlation_method <- "spearman"
+      
       gg <- ggplot(data, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
         geom_point(aes(col=gender, size=`antipsychotic generation`)) +
         geom_smooth(method="lm", col = 'black') +
@@ -154,7 +155,6 @@ eda_shiny <- function(data) {
       
       print(gg)
     })
-
 
 
 
