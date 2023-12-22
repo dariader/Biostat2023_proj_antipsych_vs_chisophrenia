@@ -732,8 +732,6 @@ selected_data <- divide_by_treat_resp %>%
   
 sum <- lm(`Comp Z` ~ ., data=selected_data) %>% 
   step(trace=0) %>% summary()
-sum$r.squared
-sum$adj.r.squared
 ```
 Multiple R-squared:  0.9186,	Adjusted R-squared:  0.608 
 
