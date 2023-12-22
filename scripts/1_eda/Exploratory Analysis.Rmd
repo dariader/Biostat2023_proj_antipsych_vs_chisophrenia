@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -29,6 +29,7 @@ library(shiny)
 library(kableExtra)
 library(broom)
 library(here)
+library(psych)
 ```
 
 # EDA
@@ -255,7 +256,7 @@ print(differences_Comp_Z[, c("id", "Comp Z", "Comp_Z_auto")])
 Так же выявлены ошибки во всех BACS.
 
 
-## Испрвление ошибок
+## Исправление ошибок
 Для замены данных правильными, создан скрипт preprocessing.R: 
 
 - Исправиляет найденные ошибки в шкалах.
@@ -277,12 +278,11 @@ data_filtered <- preprocessing(path)
 
 ```{r}
 # data_filtered %>%
-#  glimpse()
-data_filtered %>% colnames()
+# glimpse()
+# data_filtered %>% colnames()
 ```
 
 ```{r}
-library(psych)
 data_filtered %>% 
   select("id", "gender", "age", "disease duration", "antipsychotic", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
   describe() %>% 
@@ -296,9 +296,6 @@ data_filtered %>%
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
 ```
-
-
-
 
 EDA с помощью Shiny
 
@@ -390,6 +387,14 @@ significant_variables %>%
 Создадим датафрейм, содержащие разницу количественных показателей между визитами.
 
 ```{r}
+path <- here("scripts/0_preprocessing", "make_difference_df.R")
+source(path)
+difference_df <- make_dif_df(data_filtered)
+difference_df
+```
+
+
+```{r}
 # Выбираем только числовые переменные
 selected_variables <- data_filtered %>%
   select_if(is.numeric) %>% 
@@ -414,9 +419,6 @@ difference_df <- data_filtered %>%
 difference_df
 ```
 
-```{r}
-difference_df %>% str()
-```
  Визуализируем: 
  
 ```{r}
@@ -434,6 +436,7 @@ difference_df %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
 Тоже самое более кратко.
 
 ```{r}
