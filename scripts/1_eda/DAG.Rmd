@@ -69,6 +69,7 @@ coordinates(dag) <- list(
 # Визуализация DAG
 plot(dag)
 ```
+
 Ковариационная матрица (корреляционная матрица)
 
 ```{r}
@@ -135,6 +136,60 @@ ggdag(dag, text_size = 2) +
   theme_dag() +
   theme_minimal()
 ```
+
+Сделаем короткие названия
+ 
+```{r}
+library(ggplot2)
+library(ggdag)
+
+coords <- list(
+  x = c(EPSY = 0, 
+        COGN = 8,
+        ANTI = 4, 
+        TGF = 4,
+        SCZ = 4,
+        EDUC = 12,
+        GEND = 12,
+        AG = 12,
+        SMO = 12,
+        CTYP = 12,
+        AMAN = 12,
+        DEP = -2,
+        NSYM = -2),
+  y = c(EPSY = 1, 
+        COGN = 1,
+        ANTI = -1, 
+        TGF = 2,
+        SCZ = 4,
+        EDUC = 0,
+        GEND = 1,
+        AG = 2,
+        SMO = 3,
+        CTYP = 4,
+        AMAN = 5,
+        DEP = -1,
+        NSYM = 4)
+)
+
+# Создание DAG
+dag <- ggdag::dagify(
+  EPSY ~  ANTI + TGF + SCZ + DEP + NSYM,
+  COGN ~ EPSY + EPSY + ANTI + TGF + SCZ + EDUC + GEND + AG + SMO, 
+  EPSY ~ DEP + ANTI + TGF + SCZ,
+  NSYM ~ DEP + EPSY,
+  DEP ~ NSYM + EPSY,
+  exposure = "EPSY",
+  outcome = "COGN",
+  coords = coords
+)
+
+# Визуализация DAG с ggplot2
+ggdag(dag, text_size = 4) +
+  theme_dag()
+```
+
+
 
 ```{r}
 adjustmentSets(dag)
