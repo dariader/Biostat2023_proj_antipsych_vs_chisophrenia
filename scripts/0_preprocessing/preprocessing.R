@@ -43,9 +43,7 @@ preprocessing <- function(filename) {
                        "Tower of London", "ZToL", "Comp Z")
 
   factor_columns_resulting <- c("gender", "visit", "antipsychotic",
-                      "course", "education", "smoke", "antipsychotic generation", "gait", "arm dropping",
-                       "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
-                       "glabella tap", "tremor", "salivation", "akathisia", "P1", "P2", "P3", "P4", "P5",
+                      "course", "education", "smoke", "antipsychotic generation", "gait", "P1", "P2", "P3", "P4", "P5",
                       "P6", "P7","N1", "N2", "N3", "N4", "N5", "N6", "N7","G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
                        "G11", "G12", "G13", "G14", "G15", "G16")
 

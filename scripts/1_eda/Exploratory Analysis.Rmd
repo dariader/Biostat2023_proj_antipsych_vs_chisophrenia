@@ -74,6 +74,8 @@ data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor
 #data_filtered %>% glimpse
 ```
 
+
+
 ## Проверка шкал
 
 Проверим, правильно ли посчитали SAS
@@ -276,7 +278,26 @@ data_filtered <- preprocessing(path)
 ```{r}
 # data_filtered %>%
 #  glimpse()
+data_filtered %>% colnames()
 ```
+
+```{r}
+library(psych)
+data_filtered %>% 
+  select("id", "gender", "age", "disease duration", "antipsychotic", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  describe() %>% 
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
+```
+```{r}
+data_filtered %>% 
+  select("id", "gender", "age", "disease duration", "antipsychotic", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  summary() %>% 
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
+```
+
+
 
 
 EDA с помощью Shiny
@@ -285,9 +306,6 @@ EDA с помощью Shiny
 path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
-```
-```{r}
-data_filtered %>% str()
 ```
 
 
