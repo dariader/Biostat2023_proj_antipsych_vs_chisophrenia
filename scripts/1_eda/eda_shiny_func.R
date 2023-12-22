@@ -1,6 +1,6 @@
 # Список библиотек для установки, если их нет
 libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", 
-                          "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr", "RVAideMemoire", "Hmisc")
+                          "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr", "RVAideMemoire")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -19,7 +19,6 @@ library(ggfortify)
 library(plotly)
 library(ggpubr)
 library(RVAideMemoire)
-library(Hmisc)
 
 eda_shiny <- function(data) {
   
@@ -136,27 +135,27 @@ eda_shiny <- function(data) {
           geom_text(data = data %>% group_by(visit) %>%
                       summarize(cor = cor(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method),
                                 p_value = cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$p.value,
-                                ci_low = if (correlation_method == "pearson") cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$conf.int[1] else NA,
-                                ci_high = if (correlation_method == "pearson") cor.test(!!as.symbol(x_variable), !!as.symbol(y_variable), method = correlation_method)$conf.int[2] else NA),
+                                ci_low <- spearman.ci(data[[x_variable]], data[[y_variable]])$conf.int[1],
+                                ci_high <- spearman.ci(data[[x_variable]], data[[y_variable]])$conf.int[2]),
                     aes(label = paste("r: ", round(cor, 2), "\np-value: ", round(p_value, 4),
-                                      if (correlation_method == "pearson") paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]"))),
-                    x = x_center, y = y_center, hjust = 0.5, vjust = 0.5, size = 8)
+                                      paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]"))),
+                    x = x_center, y = y_center, hjust = 0.5, vjust = 0.5, size = 8) +
+          annotate("text", x = Inf, y = -Inf, label = "*method: spearman", hjust = 1, vjust = 0, size = 5, color = "black")
       } else {
         cor_test_result <- cor.test(data[[x_variable]], data[[y_variable]], method = correlation_method)
         correlation_coefficient <- cor_test_result$estimate
         p_value <- cor_test_result$p.value
-        ci_low <- if (correlation_method == "pearson") cor_test_result$conf.int[1] else NA
-        ci_high <- if (correlation_method == "pearson") cor_test_result$conf.int[2] else NA
+        ci_low <- spearman.ci(data[[x_variable]], data[[y_variable]])$conf.int[1]
+        ci_high <- spearman.ci(data[[x_variable]], data[[y_variable]])$conf.int[2]
         gg <- gg + annotate("text", x = x_center, y = y_center,
                             label = paste("r: ", round(correlation_coefficient, 2), "\np-value: ", round(p_value, 4),
-                                          if (correlation_method == "pearson") paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]")),
-                            hjust = 0.5, vjust = 0.5, size = 8)
+                                          paste("\nCI: [", round(ci_low, 2), ", ", round(ci_high, 2), "]")),
+                            hjust = 0.5, vjust = 0.5, size = 8) +
+          annotate("text", x = Inf, y = -Inf, label = "*method: spearman", hjust = 1, vjust = 0, size = 5, color = "black")
       }
       
       print(gg)
     })
-
-
 
     output$corr <- renderPlotly({
       select_corr <- input$select_corr
