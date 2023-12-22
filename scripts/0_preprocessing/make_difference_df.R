@@ -1,5 +1,5 @@
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "here")
+libraries_to_install <- c("tidyverse")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -9,11 +9,6 @@ for (library_name in libraries_to_install) {
 }
 
 library(tidyverse)
-library(ggplot2)
-library(writexl)
-library(openxlsx)
-library(here)
-
 make_dif_df <- function(data) {
 
   numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
