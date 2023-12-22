@@ -156,7 +156,8 @@ coords <- list(
         CTYP = 12,
         AMAN = 12,
         DEP = -2,
-        NSYM = -2),
+        NSYM = -2,
+        INMT = 4),
   y = c(EPS  = 1, 
         COGN = 1,
         APD = -1, 
@@ -169,13 +170,14 @@ coords <- list(
         CTYP = 4,
         AMAN = 5,
         DEP = -1,
-        NSYM = 4)
+        NSYM = 4,
+        INMT = -2)
 )
 
 # Создание DAG
 dag <- ggdag::dagify(
-  EPS  ~  APD + TGF + SCZ + DEP + NSYM,
-  COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK, 
+  EPS  ~  APD + TGF + SCZ + DEP + NSYM + INMT,
+  COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK + INMT, 
   EPS  ~ DEP + APD + TGF + SCZ,
   NSYM ~ DEP + EPS,
   DEP ~ NSYM + EPS,
