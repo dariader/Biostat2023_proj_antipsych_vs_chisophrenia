@@ -284,14 +284,17 @@ data_filtered <- preprocessing(path)
 
 ```{r}
 data_filtered %>% 
-  select("id", "gender", "age", "disease duration", "antipsychotic", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
   describe() %>% 
+  select(vars, n, mean, sd, median, min, max, range) %>% 
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
 ```
+
+
 ```{r}
 data_filtered %>% 
-  select("id", "gender", "age", "disease duration", "antipsychotic", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
   summary() %>% 
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
