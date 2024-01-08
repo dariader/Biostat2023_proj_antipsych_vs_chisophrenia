@@ -153,7 +153,6 @@ lm_shiny <- function(data_path) {
                         selected = character(0))
     })
     
-    
     # Обработка выполнения step()
     observeEvent(input$step_button, {
       selected_predictors <- selected_stepwise_predictors()
@@ -172,12 +171,37 @@ lm_shiny <- function(data_path) {
       
       formula_str <- as.formula(paste(input$step_response_var, "~", paste(selected_predictors, collapse = " + ")))
       
+      # Функция для определения оттенка зеленого в зависимости от уровня значимости
+      get_shade_of_green <- function(p_value) {
+        if (p_value < 0.001) {
+          return("#00FF00")  # Зеленый для уровня значимости < 0.001
+        } else if (p_value < 0.01) {
+          return("#66FF66")  # Светло-зеленый для уровня значимости < 0.01
+        } else if (p_value < 0.05) {
+          return("#99FF99")  # Средне-зеленый для уровня значимости < 0.05
+        } else {
+          return("#FFFFFF")  # Белый для всех остальных случаев
+        }
+      }
+      
       step_model <- step(lm(formula_str, data = data_filtered))
       output$stepwise_table <- renderTable({
         tidy_table <- tidy(step_model)
+        
         kable(tidy_table, "html", align = "c", escape = FALSE) %>%
           kable_styling("striped", full_width = FALSE) %>%
-          row_spec(which(tidy_table$p.value < 0.05), background = "#99FF99")  # Задайте цвет для значимых строк
+          row_spec(
+            which(tidy_table$p.value < 0.001),
+            background = "#00FF00"
+          ) %>%
+          row_spec(
+            which(tidy_table$p.value >= 0.001 & tidy_table$p.value < 0.01),
+            background = "#66FF66"
+          ) %>%
+          row_spec(
+            which(tidy_table$p.value >= 0.01 & tidy_table$p.value < 0.05),
+            background = "#99FF99"
+          )
       }, sanitize.text.function = function(x) x)
       
       # Вывод R-квадрата
