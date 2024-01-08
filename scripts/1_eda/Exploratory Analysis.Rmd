@@ -743,33 +743,17 @@ lm с помощью Shiny можно запустить.
 
 Для обоих визитов:
 
-
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
-lm_shiny(data_filtered %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
+lm_shiny(data_filtered %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
 ```
 
-Для первого визита:
-
-```{r eval=FALSE}
-path <- here("scripts/1_eda", "lm_shiny.R")
-source(path)
-lm_shiny(data_filtered %>% filter(visit==1) %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
-```
-
-Для второго визита:
-
-```{r eval=FALSE}
-path <- here("scripts/1_eda", "lm_shiny.R")
-source(path)
-lm_shiny(data_filtered %>% filter(visit==2) %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
-```
 
 Для разницы между визитами:
 
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
-lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
+lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
 ```

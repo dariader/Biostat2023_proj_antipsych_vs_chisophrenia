@@ -129,48 +129,45 @@ lm_shiny <- function(data_path) {
       selected_stepwise_predictors(input$step_predictors)
     })
     
+    # Создание динамического UI для выбора предикторов в step()
+    output$step_predictor_selector <- renderUI({
+      selectInput("step_predictors", "Предикторы:",
+                  choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                  selected = selected_stepwise_predictors(),
+                  multiple = TRUE)
+    })
+    
     # Обработка добавления всех факторов в step()
     observeEvent(input$add_all_button, {
       selected_stepwise_predictors(names(data_filtered))
+      updateSelectInput(session, "step_predictors",
+                        choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                        selected = setdiff(names(data_filtered), input$step_response_var))
     })
     
     # Обработка удаления всех факторов из step()
     observeEvent(input$remove_all_button, {
       selected_stepwise_predictors(character(0))
+      updateSelectInput(session, "step_predictors",
+                        choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                        selected = character(0))
     })
     
-    # Создание динамического UI для выбора предикторов в step()
-    output$step_predictor_selector <- renderUI({
-      selectInput("step_predictors", "Предикторы:",
-                  choices = c("", names(data_filtered)),
-                  selected = selected_stepwise_predictors(),
-                  multiple = TRUE)
-    })
     
     # Обработка выполнения step()
     observeEvent(input$step_button, {
       selected_predictors <- selected_stepwise_predictors()
-      formula_str <- as.formula(paste(input$step_response_var, "~", paste(selected_predictors, collapse = " + ")))
       
-      # Проверка наличия переменных с одним уровнем
-      excluded_predictors <- character(0)
-      for (predictor in selected_predictors) {
-        if (length(unique(data_filtered[[predictor]])) <= 1) {
-          excluded_predictors <- c(excluded_predictors, predictor)
-        }
-      }
-      
-      # Исключение переменных с одним уровнем из выбранных
-      selected_predictors <- setdiff(selected_predictors, excluded_predictors)
-      
+      # Проверка наличия выбранных факторов
       if (length(selected_predictors) == 0) {
-        # Если не осталось выбранных предикторов, выдаем сообщение
-        showModal(modalDialog(
-          title = "Ошибка",
-          "Все выбранные предикторы содержат только одно значение и не могут быть включены в модель.",
-          easyClose = TRUE
-        ))
-        return(NULL)
+        showModal(
+          modalDialog(
+            title = "Ошибка",
+            "Выберите хотя бы один предиктор",
+            easyClose = TRUE
+          )
+        )
+        return()
       }
       
       formula_str <- as.formula(paste(input$step_response_var, "~", paste(selected_predictors, collapse = " + ")))
@@ -194,27 +191,9 @@ lm_shiny <- function(data_path) {
         adj_r_squared <- summary(step_model)$adj.r.squared
         paste("Adjusted R-squared: ", round(adj_r_squared, 4))
       })
-      
-      # Если были исключены переменные, сообщаем об этом пользователю
-      if (length(excluded_predictors) > 0) {
-        showModal(modalDialog(
-          title = "Исключенные предикторы",
-          paste("Следующие предикторы содержат только одно значение и были исключены из модели:", paste(excluded_predictors, collapse = ", ")),
-          easyClose = TRUE
-        ))
-      }
     })
   }
   
   # Запуск Shiny-приложения
   shinyApp(ui = ui, server = server)
 }
-
-# Пример использования с фиктивными данными
-data_example <- data.frame(
-  Comp_1 = rnorm(100),
-  Comp_2 = rnorm(100),
-  Y = rnorm(100)
-)
-
-lm_shiny(data_example)
