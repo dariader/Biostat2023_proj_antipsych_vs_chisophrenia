@@ -736,8 +736,8 @@ selected_data <- divide_by_treat_resp %>%
 sum <- lm(`Comp Z` ~ ., data=selected_data) %>% 
   step(trace=0) %>% summary()
 ```
-Multiple R-squared:  0.9186,	Adjusted R-squared:  0.608 
 
+Multiple R-squared:  0.9186,	Adjusted R-squared:  0.608 
 
 lm с помощью Shiny можно запустить.
 

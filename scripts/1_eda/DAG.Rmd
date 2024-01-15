@@ -164,9 +164,9 @@ coords <- list(
         TGF = 2,
         SCZ = 4,
         EDUC = 0,
-        GEND = 1,
-        AGE = 2,
-        SMOK = 3,
+        GEND = 2,
+        AGE = 4,
+        SMOK = 6,
         CTYP = 4,
         AMAN = 5,
         DEP = -1,
@@ -178,9 +178,7 @@ coords <- list(
 dag <- ggdag::dagify(
   EPS  ~  APD + TGF + SCZ + DEP + NSYM + INMT,
   COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK + INMT, 
-  EPS  ~ DEP + APD + TGF + SCZ,
-  NSYM ~ DEP + EPS,
-  DEP ~ NSYM + EPS,
+  EPS  ~ DEP + APD + TGF + SCZ + GEND + AGE + SMOK,
   exposure = "EPS",
   outcome = "COGN",
   coords = coords
@@ -192,10 +190,12 @@ ggdag(dag, text_size = 4) +
 ```
 
 
-
-```{r}
-adjustmentSets(dag)
+```{r, fig.width=10, fig.height=8}
+ggdag_adjustment_set(dag, shadow = T) +
+    theme_dag()
 ```
+
+
 
 ```{r}
 impliedConditionalIndependencies(dag)
