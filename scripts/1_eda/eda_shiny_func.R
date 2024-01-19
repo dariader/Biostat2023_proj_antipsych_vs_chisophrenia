@@ -59,7 +59,7 @@ eda_shiny <- function(data) {
                selectInput("scatter_y", "Выберите переменную по Y", choices = numeric_variables),
                checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
                plotOutput("scatterplot")
-
+               
       )
     )
   )
@@ -67,54 +67,54 @@ eda_shiny <- function(data) {
   # Server для приложения Shiny
   server <- function(input, output) {
     output$cat_barplot <- renderPlotly({
-    variable <- input$cat_variable
-    split_by_visit <- input$split_by_visit
-
-   gg <- ggplot(data, aes(x = !!as.symbol(variable), fill = !!as.symbol(variable))) +
+      variable <- input$cat_variable
+      split_by_visit <- input$split_by_visit
+      
+      gg <- ggplot(data, aes(x = !!as.symbol(variable), fill = !!as.symbol(variable))) +
         geom_bar() +
         labs(title = paste("Столбчатая диаграмма для", variable)) +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
+      
       
       if (split_by_visit) {
         gg <- gg + facet_wrap(~visit)
       }
-
-    ggplotly(gg)
-  })
+      
+      ggplotly(gg)
+    })
     
     output$num_plot <- renderPlotly({
       variable <- input$num_variable
       split_by_visit_num <- input$split_by_visit_num
       plot_type <- input$plot_type
-
+      
       gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
         labs(title = paste("График для", variable))
-
+      
       if (plot_type == "histogram") {
         gg <- gg + geom_histogram(fill = "skyblue", bins = 10)
       } else if (plot_type == "density") {
         gg <- gg + geom_density(fill = "skyblue")
       } else if (plot_type == "boxplot") {
         gg <- ggplot(data) +
-        labs(title = paste("График для", variable)) + geom_boxplot(aes(y = !!as.symbol(variable)), fill = "skyblue")
+          labs(title = paste("График для", variable)) + geom_boxplot(aes(y = !!as.symbol(variable)), fill = "skyblue")
       }
-
+      
       if (split_by_visit_num) {
         gg <- gg + facet_wrap(~visit)
       }
-
+      
       if (split_by_visit_num & plot_type == "boxplot"){
         gg <-  ggplot(data, aes(x = visit, y = !!as.symbol(variable))) +
           labs(title = paste("График для", variable)) +
           geom_boxplot(fill = "skyblue")
       }
-
-
+      
+      
       ggplotly(gg)
     })
-
+    
     output$scatterplot <- renderPlot({
       x_variable <- input$scatter_x
       y_variable <- input$scatter_y
@@ -156,24 +156,24 @@ eda_shiny <- function(data) {
       print(gg)
     })
     
-
+    
     output$corr <- renderPlotly({
       select_corr <- input$select_corr
       select_gen <- input$select_generation
       # Define a regular expression pattern for items to exclude
       pattern_to_exclude <- "^(G|N|P)[0-9]+$"
-
+      
       # Use grep to select items that do not match the pattern
       selected_items <- numeric_variables[!grepl(pattern_to_exclude, numeric_variables)]
-
+      
       if(select_corr %in% 'all'){
         corr_data <- data
       }
       if(select_corr %in% '1'){
-       corr_data <- data[data$visit==1,]
+        corr_data <- data[data$visit==1,]
       }
-       if(select_corr %in% '2'){
-       corr_data <- data[data$visit==2,]
+      if(select_corr %in% '2'){
+        corr_data <- data[data$visit==2,]
       }
       if(select_corr %in% 'difference'){
         # переменные которые не нужно вычитать
@@ -182,47 +182,47 @@ eda_shiny <- function(data) {
           select(id, age, `disease duration`, `THF dose`, CPZE)
         selected_variables <- selected_items
         corr_data <- data %>%
-      select(id, visit, all_of(selected_variables)) %>%
-      group_by(id) %>%
-      summarise(across(selected_variables, ~diff(.))) %>%
-      mutate(age = add_df$age,
-             `disease duration` = add_df$`disease duration`,
-             `THF dose` = add_df$`THF dose`,
-             CPZE = add_df$CPZE
-             )
+          select(id, visit, all_of(selected_variables)) %>%
+          group_by(id) %>%
+          summarise(across(selected_variables, ~diff(.))) %>%
+          mutate(age = add_df$age,
+                 `disease duration` = add_df$`disease duration`,
+                 `THF dose` = add_df$`THF dose`,
+                 CPZE = add_df$CPZE
+          )
       }
-
-    if(select_gen %in% '1'){
-      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 1,]
-    }
-    if(select_gen %in% '2'){
-      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 2,]
-    }
-    if(select_gen %in% '3'){
-      corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 3,]
-    }
-
+      
+      if(select_gen %in% '1'){
+        corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 1,]
+      }
+      if(select_gen %in% '2'){
+        corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 2,]
+      }
+      if(select_gen %in% '3'){
+        corr_data <- corr_data[corr_data[,'antipsychotic generation'] == 3,]
+      }
+      
       data_num <- corr_data[,c(selected_items)]
-
+      
       # Assuming cor_matrix is your correlation matrix and clusters is the result of hierarchical clustering
       cor_matrix <- cor(data_num)
       dendrogram <- hclust(dist(1 - cor_matrix))
       clusters <- cutree(dendrogram, k = 3)
-
+      
       # Reorder the correlation matrix based on the clustering
       sorted_cor_matrix <- cor_matrix[order.dendrogram(as.dendrogram(dendrogram)),
                                       order.dendrogram(as.dendrogram(dendrogram))]
       color_intervals <- c(-5, -0.9, -0.3, 0.3, 0.9, 5)
       colors <- c("green", "white", "white", "white", "white","red")
-
+      
       # Create a clustered heatmap using Plotly
       cor_plot <- plot_ly(z = sorted_cor_matrix,
                           colorscale = 'Viridis',  # You can choose a different color scale
                           x = colnames(sorted_cor_matrix),
                           y = rownames(sorted_cor_matrix),
                           type = "heatmap")
-
-
+      
+      
       # Show the plot
       cor_plot
     })

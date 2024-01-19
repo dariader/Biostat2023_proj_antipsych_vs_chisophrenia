@@ -10,6 +10,14 @@ library(broom)
 library(here)
 library(knitr)
 
+# Функция для извлечения p-value модели
+overall_p <- function(my_model) {
+  f <- summary(my_model)$fstatistic
+  p_value <- pf(f[1], f[2], f[3], lower.tail = FALSE)
+  attributes(p_value) <- NULL
+  return(p_value)
+}
+
 lm_shiny <- function(data_path) {
   
   data_filtered <- data_path
@@ -38,7 +46,8 @@ lm_shiny <- function(data_path) {
                    tableOutput("regression_table"),
                    textOutput("r_squared_value"),
                    textOutput("adj_r_squared_value"),
-                   textOutput("F")
+                   textOutput("f_statistic"),  
+                   textOutput("p_value_f_statistic")  
                  )
                )),
       tabPanel("Stepwise Regression",
@@ -57,7 +66,10 @@ lm_shiny <- function(data_path) {
                  mainPanel(
                    tableOutput("stepwise_table"),
                    textOutput("r_squared_value_stepwise"),
-                   textOutput("adj_r_squared_value_stepwise")
+                   textOutput("adj_r_squared_value_stepwise"),
+                   textOutput("f_statistic_stepwise"),  
+                   textOutput("p_value_f_statistic_stepwise")  
+                   
                  )
                ))
     )
@@ -111,8 +123,29 @@ lm_shiny <- function(data_path) {
     
     # Вывод F-статистики и p-value
     output$f_statistic <- renderText({
-      f_statistic <- summary(regression_model())$fstatistic
-      paste("F:  ")
+      regression_summary <- summary(regression_model())
+      
+      if ("fstatistic" %in% names(regression_summary)) {
+        f_statistic <- regression_summary$fstatistic
+        result <- paste("F-statistic: ", round(f_statistic[1], 4))
+      } else {
+        result <- " "
+      }
+      
+      return(result)
+    })
+    
+    output$p_value_f_statistic <- renderText({
+      regression_summary <- summary(regression_model())
+      
+      if ("fstatistic" %in% names(regression_summary)) {
+        p_value <- overall_p(regression_model())
+        result <- paste("p-value: ", format(p_value, digits = 4))
+      } else {
+        result <- " "
+      }
+      
+      return(result)
     })
     
     # Создание динамического UI для выбора предикторов
@@ -221,6 +254,33 @@ lm_shiny <- function(data_path) {
       output$adj_r_squared_value_stepwise <- renderText({
         adj_r_squared <- summary(step_model)$adj.r.squared
         paste("Adjusted R-squared: ", round(adj_r_squared, 4))
+      })
+      
+      # Вывод F-статистики и p-value
+      output$f_statistic_stepwise <- renderText({
+        regression_summary <- summary(regression_model())
+        
+        if ("fstatistic" %in% names(regression_summary)) {
+          f_statistic <- regression_summary$fstatistic
+          result <- paste("F-statistic: ", round(f_statistic[1], 4))
+        } else {
+          result <- " "
+        }
+        
+        return(result)
+      })
+      
+      output$p_value_f_statistic_stepwise <- renderText({
+        regression_summary <- summary(regression_model())
+        
+        if ("fstatistic" %in% names(regression_summary)) {
+          p_value <- overall_p(regression_model())
+          result <- paste("p-value: ", format(p_value, digits = 4))
+        } else {
+          result <- " "
+        }
+        
+        return(result)
       })
       
     })
