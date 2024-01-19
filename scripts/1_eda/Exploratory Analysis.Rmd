@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -30,6 +30,8 @@ library(kableExtra)
 library(broom)
 library(here)
 library(psych)
+library(lme4)
+library(lmerTest)
 ```
 
 # EDA
@@ -756,6 +758,103 @@ lm_shiny(data_filtered %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !m
 path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
 lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
+```
+### Смешанные модели
+
+Испульзуя корреляционный анализ, решили строить смешанные модели, для предсказания когнитивных функций 
+
+- ZVM
+
+- ZMT
+
+- ZVF
+
+- ZToL
+
+- Comp Z
+
+Первая попытка.
+Смешанная модель, в качестве случайного эффекта выбран id пациента.
+Используем lmer из пакета lmerTest, чтобы оценить p-value.
+
+```{r}
+selected_data <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM, gender) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+mixed_model <- lmer(ZVM ~ `Total score SAS` + (1 | id), data = selected_data, REML=F)
+summary(mixed_model)
+```
+Для оценки фиксированного и случайного эффекта можно использовать:
+
+```{r}
+#fixef(mixed_model)
+#ranef(mixed_model)
+```
+
+Создаем датафреймы.
+
+```{r}
+# Для предсказания ZVM
+selected_data_ZVM <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM, gender, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+# Для предсказания ZMT
+selected_data_ZMT <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZMT, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+# Для предсказания ZVF
+selected_data_ZVF <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVF, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+# Для предсказания ZToL
+selected_data_ZToL <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZToL, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+# Для предсказания Comp Z
+selected_data_Comp_Z <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), `Comp Z`, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`)
+
+```
+
+Проверим, правильно ли выбрали
+
+```{r}
+# Сравнение числа колонок
+num_cols_ZVM <- ncol(selected_data_ZVM)
+num_cols_ZMT <- ncol(selected_data_ZMT)
+num_cols_ZVF <- ncol(selected_data_ZVF)
+num_cols_ZToL <- ncol(selected_data_ZToL)
+num_cols_Comp_Z <- ncol(selected_data_Comp_Z)
+
+# Печать результатов
+cat("Число колонок в selected_data_ZVM:", num_cols_ZVM, "\n")
+cat("Число колонок в selected_data_ZMT:", num_cols_ZMT, "\n")
+cat("Число колонок в selected_data_ZVF:", num_cols_ZVF, "\n")
+cat("Число колонок в selected_data_ZToL:", num_cols_ZToL, "\n")
+cat("Число колонок в selected_data_Comp_Z:", num_cols_Comp_Z, "\n")
 ```
 
 
