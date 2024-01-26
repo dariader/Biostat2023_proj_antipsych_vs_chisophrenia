@@ -1,8 +1,8 @@
-# Список библиотек для установки, если их нет
+# List of libraries to install if not already installed
 libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", 
                           "shiny", "FactoMineR", "ggfortify", "plotly", "ggpubr", "RVAideMemoire")
 
-# Проверка и установка библиотек
+# Check and install libraries
 for (library_name in libraries_to_install) {
   if (!requireNamespace(library_name, quietly = TRUE)) {
     install.packages(library_name, dependencies = TRUE)
@@ -22,49 +22,48 @@ library(RVAideMemoire)
 
 eda_shiny <- function(data) {
   
-  # Категориальные переменные
+  # Categorical variables
   categorical_variables <- data %>% select_if(is.factor) %>% names()
   
-  # Нумерические переменные
+  # Numeric variables
   numeric_variables <- data %>% select_if(is.numeric) %>% names()
   
-  # UI для приложения Shiny
+  # UI for the Shiny application
   ui <- fluidPage(
     tabsetPanel(
-      tabPanel("Категориальные переменные",
-               selectInput("cat_variable", "Выберите категориальную переменную", choices = categorical_variables),
-               checkboxInput("split_by_visit", "Разбить по 'visit'", value = FALSE),
+      tabPanel("Categorical Variables",
+               selectInput("cat_variable", "Select categorical variable", choices = categorical_variables),
+               checkboxInput("split_by_visit", "Split by 'visit'", value = FALSE),
                plotlyOutput("cat_barplot")
       ),
-      tabPanel("Числовые переменные",
-               selectInput("num_variable", "Выберите числовую переменную", choices = numeric_variables),
-               checkboxInput("split_by_visit_num", "Разбить по 'visit'", value = FALSE),
-               radioButtons("plot_type", "Выберите тип графика:",
-                            choices = c("Гистограмма" = "histogram", "Плотность" = "density", "Боксплот" = "boxplot"),
+      tabPanel("Numeric Variables",
+               selectInput("num_variable", "Select numeric variable", choices = numeric_variables),
+               checkboxInput("split_by_visit_num", "Split by 'visit'", value = FALSE),
+               radioButtons("plot_type", "Select plot type:",
+                            choices = c("Histogram" = "histogram", "Density" = "density", "Boxplot" = "boxplot"),
                             selected = "histogram"),
                plotlyOutput("num_plot")
       ),
       # tabPanel("PCA",
-      #          selectInput("pca_variable", "Выберите переменную для группировки", choices = categorical_variables),
-      #          checkboxInput("split_by_visit_pca", "Разбить по 'visit'", value = TRUE),
+      #          selectInput("pca_variable", "Select variable for grouping", choices = categorical_variables),
+      #          checkboxInput("split_by_visit_pca", "Split by 'visit'", value = TRUE),
       #          plotOutput("pca")
       # ),
       tabPanel("Correlation",
-               selectInput("select_corr", "Выберите визит", choices = c('all','1','2','difference')),
-               selectInput("select_generation", "Выберите генерацию", choices = c('all','1','2','3')),
+               selectInput("select_corr", "Select visit", choices = c('all','1','2','difference')),
+               selectInput("select_generation", "Select generation", choices = c('all','1','2','3')),
                plotlyOutput("corr")
       ),
       tabPanel("Scatterplot",
-               selectInput("scatter_x", "Выберите переменную по X", choices = numeric_variables),
-               selectInput("scatter_y", "Выберите переменную по Y", choices = numeric_variables),
-               checkboxInput("split_by_visit_scatter", "Разбить по 'visit'", value = FALSE),
+               selectInput("scatter_x", "Select variable for X-axis", choices = numeric_variables),
+               selectInput("scatter_y", "Select variable for Y-axis", choices = numeric_variables),
+               checkboxInput("split_by_visit_scatter", "Split by 'visit'", value = FALSE),
                plotOutput("scatterplot")
-               
       )
     )
   )
   
-  # Server для приложения Shiny
+  # Server for the Shiny application
   server <- function(input, output) {
     output$cat_barplot <- renderPlotly({
       variable <- input$cat_variable
@@ -72,10 +71,9 @@ eda_shiny <- function(data) {
       
       gg <- ggplot(data, aes(x = !!as.symbol(variable), fill = !!as.symbol(variable))) +
         geom_bar() +
-        labs(title = paste("Столбчатая диаграмма для", variable)) +
+        labs(title = paste("Barplot for", variable)) +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 45, hjust = 1))
-      
       
       if (split_by_visit) {
         gg <- gg + facet_wrap(~visit)
@@ -90,7 +88,7 @@ eda_shiny <- function(data) {
       plot_type <- input$plot_type
       
       gg <- ggplot(data, aes(x = !!as.symbol(variable))) +
-        labs(title = paste("График для", variable))
+        labs(title = paste("Plot for", variable))
       
       if (plot_type == "histogram") {
         gg <- gg + geom_histogram(fill = "skyblue", bins = 10)
@@ -98,7 +96,7 @@ eda_shiny <- function(data) {
         gg <- gg + geom_density(fill = "skyblue")
       } else if (plot_type == "boxplot") {
         gg <- ggplot(data) +
-          labs(title = paste("График для", variable)) + geom_boxplot(aes(y = !!as.symbol(variable)), fill = "skyblue")
+          labs(title = paste("Plot for", variable)) + geom_boxplot(aes(y = !!as.symbol(variable)), fill = "skyblue")
       }
       
       if (split_by_visit_num) {
@@ -107,10 +105,9 @@ eda_shiny <- function(data) {
       
       if (split_by_visit_num & plot_type == "boxplot"){
         gg <-  ggplot(data, aes(x = visit, y = !!as.symbol(variable))) +
-          labs(title = paste("График для", variable)) +
+          labs(title = paste("Plot for", variable)) +
           geom_boxplot(fill = "skyblue")
       }
-      
       
       ggplotly(gg)
     })
@@ -124,7 +121,7 @@ eda_shiny <- function(data) {
       gg <- ggplot(data, aes(x = !!as.symbol(x_variable), y = !!as.symbol(y_variable))) +
         geom_point(aes(col=gender, size=`antipsychotic generation`)) +
         geom_smooth(method="lm", col = 'black') +
-        labs(title = paste("Scatterplot для", x_variable, "и", y_variable)) +
+        labs(title = paste("Scatterplot for", x_variable, "and", y_variable)) +
         theme_minimal()
       x_center <- mean(range(data[[x_variable]]))
       y_center <- mean(range(data[[y_variable]]))
@@ -156,7 +153,6 @@ eda_shiny <- function(data) {
       print(gg)
     })
     
-    
     output$corr <- renderPlotly({
       select_corr <- input$select_corr
       select_gen <- input$select_generation
@@ -176,7 +172,7 @@ eda_shiny <- function(data) {
         corr_data <- data[data$visit==2,]
       }
       if(select_corr %in% 'difference'){
-        # переменные которые не нужно вычитать
+        # variables that should not be subtracted
         add_df <- data %>%
           filter(visit == 1) %>%
           select(id, age, `disease duration`, `THF dose`, CPZE)
@@ -222,13 +218,12 @@ eda_shiny <- function(data) {
                           y = rownames(sorted_cor_matrix),
                           type = "heatmap")
       
-      
       # Show the plot
       cor_plot
     })
     
   }
   
-  # Запуск приложения Shiny
+  # Run the Shiny application
   shinyApp(ui, server)
 }

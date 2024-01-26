@@ -15,7 +15,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -36,6 +36,7 @@ library(psych)
 library(lme4)
 library(lmerTest)
 library(broom)
+library(nnet)
 ```
 
 # EDA
@@ -293,6 +294,7 @@ data_filtered %>%
   select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
   describe() %>% 
   select(vars, n, mean, sd, median, min, max, range) %>% 
+  round(3) %>% 
   kable("html") %>%
   kable_styling("striped", full_width = FALSE)
 ```
@@ -312,9 +314,6 @@ data_filtered %>%
 path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
-
-#eda_shiny(divide_by_treat_resp)
-
 ```
 
 
@@ -443,6 +442,44 @@ difference_df %>%
   guides(fill = FALSE) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
+Выберем нужное для презентации
+
+```{r}
+difference_df %>%
+  gather(variable, value, -id) %>%
+  filter(!grepl("G[1-9]|N[1-7]|P[1-7]_dif$", variable)) %>%
+  group_by(variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>%
+  filter(grepl("_dif$", variable)) %>%
+  mutate(variable = gsub("_dif$", "", variable)) %>%
+  filter(variable %in% c("Total score PANSS", "tremor", "akathisia", "head rotation", "Total score SAS", "ZVM", "ZTol", "ZMT", "ZVF", "Comp Z")) %>% 
+  mutate(variable = case_when(
+    variable == "ZVM" ~ "Verbal Memory",
+    variable == "ZMT" ~ "Motor Test",
+    variable == "ZVF" ~ "Speech Fluency",
+    variable == "ZTol" ~ "Tower of London",
+    variable == "Comp Z" ~ "Composite BACS Score",
+    variable == "tremor" ~ "Tremor",
+    variable == "akathisia" ~ "Akathisia",
+    variable == "head rotation" ~ "Head Rotation",
+    variable == "Total score SAS" ~ "Total score SAS",
+    TRUE ~ variable
+  )) %>%
+  mutate(variable = factor(variable, levels = c("Total score PANSS", "Verbal Memory", "Motor Test", "Speech Fluency", "Tower of London", "Composite BACS Score", "Tremor", "Akathisia", "Head Rotation", "Total score SAS"))) %>%
+  ggplot(aes(x = variable, y = mean_value, fill = factor(sign(mean_value)))) +
+  geom_bar(stat = "identity", color = "black") +
+  scale_fill_manual(values = c("#6600FF", "#CC3333", "green"), name = "Sign", labels = c("Negative", "Zero", "Positive")) +
+  labs(title = "Mean Deviation of Variables",
+       x = "Variables",
+       y = "Mean Deviation") +
+  theme_minimal() +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+```
+
 
 EDA difference_df в shiny доступна только для числовых переменнных.
 
@@ -822,6 +859,7 @@ path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
 lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
 ```
+
 ### Смешанные модели
 
 Испульзуя корреляционный анализ, решили строить смешанные модели, для предсказания когнитивных функций 
@@ -892,6 +930,7 @@ cat("Число колонок в selected_data_Comp_Z:", num_cols_Comp_Z, "\n")
 
 ```
 #### Первая попытка.
+
 Смешанная модель, в качестве случайного эффекта выбран id пациента.
 Используем lmer из пакета lmerTest, чтобы оценить p-value.
 
@@ -955,21 +994,25 @@ summary_dataframe %>%
 ```
 Самые лучшая модель по mixed_model_ZVF.
 
-#### Следующий этап. Строим много моделей.
+#### Следующий этап. Модели оценки когнитивных функций.
+
+В смешанных моделях в качестве случайного эффекта выбран id пациента.
+Используем lmer из пакета lmerTest, чтобы оценить p-value.
+
 
 Строим модели:
 
 1.1.1 ZVM ~ `Total score PANSS` + `THF dose`
 
-1.1.2 ZVM ~ as.factor(`head rotation`) + `Total score PANSS` + `THF dose`
+1.1.2 ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`
 
 1.2.1 ZMT ~ `Total score PANSS` + `THF dose`
 
-1.2.2 ZMT ~ as.factor(akathisia) + `Total score PANSS` + `THF dose`
+1.2.2 ZMT ~ akathisia + `Total score PANSS` + `THF dose`
 
 1.3. ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`
 
-1.4.1 ZVF ~ as.factor(tremor) + `Total score PANSS` + `THF dose`
+1.4.1 ZVF ~ tremor + `Total score PANSS` + `THF dose`
 
 1.4.2 ZVF ~ `Total score PANSS` + `THF dose`
 
@@ -977,16 +1020,16 @@ summary_dataframe %>%
 
 ```{r}
 model_1_1_1 <- lm(ZVM ~ `Total score PANSS` + `THF dose`, data = selected_data_ZVM)
-model_1_1_2 <- lm(ZVM ~ as.factor(`head rotation`) + `Total score PANSS` + `THF dose`, data = selected_data_ZVM)
+model_1_1_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM)
 
 model_1_2_1 <- lm(ZMT ~ `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
-model_1_2_2 <- lm(ZMT ~ as.factor(akathisia) + `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
+model_1_2_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
 
 model_1_3 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
 
 model_1_4_1 <- lm(ZVF ~ `Total score PANSS` + `THF dose`, data = selected_data_ZVF)
 
-model_1_4_2 <- lm(ZVF ~ as.factor(tremor) + `Total score PANSS` + `THF dose`, data = selected_data_ZVF)
+model_1_4_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF)
 
 model_1_5 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL) 
 ```
@@ -1001,7 +1044,6 @@ model_1_5 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, dat
 
 Для моделей model_1_3 и model_1_5 берем p-value для `Total score SAS`
 Применим поправку Бенджамина Хохберга.
-
 
 ```{r}
 # Сравнение моделей с использованием anova
@@ -1044,6 +1086,12 @@ get_lm_summary_table <- function(model, dependent_variable) {
   table_data$Variable <- rownames(coefficients)
   rownames(table_data) <- NULL
   
+  # Округление до 3 знаков после запятой
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
   # Добавление имени зависимой переменной
   table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
   
@@ -1070,64 +1118,131 @@ final_table <- rbind(table_ZVM_1, table_ZVM_2, table_ZMT_1_1, table_ZMT_1_2, tab
 # Вывод таблицы
 kable(final_table, format = "html")
 
+
+```
+
+Разбиваем по визитам
+
+```{r}
+model_ZVM_visit_1 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM %>% filter(visit==1))
+model_ZVM_visit_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM %>% filter(visit==2))
+
+model_ZMT_1_visit_1 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==1))
+model_ZMT_1_visit_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==2))
+
+model_ZMT_2_visit_1 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==1)) 
+model_ZMT_2_visit_2 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==2)) 
+
+model_ZVF_visit_1 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF %>% filter(visit==1))
+model_ZVF_visit_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF %>% filter(visit==2))
+
+model_ZToL_visit_1 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL %>% filter(visit==1)) 
+model_ZToL_visit_2 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL %>% filter(visit==1))
+
+# Создание функции для получения summary и преобразования в таблицу
+get_lm_summary_table <- function(model, dependent_variable) {
+  summary_data <- summary(model)
+  
+  # Извлечение интересующих вас данных из summary
+  coefficients <- summary_data$coefficients[, c("Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+  
+  # Создание таблицы
+  table_data <- as.data.frame(coefficients)
+  table_data$Variable <- rownames(coefficients)
+  rownames(table_data) <- NULL
+  
+  # Округление до 3 знаков после запятой
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
+  # Добавление имени зависимой переменной
+  table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
+  
+  return(table_data)
+}
+
+# Получение таблиц для каждой модели
+table_ZVM_visit_1 <- get_lm_summary_table(model_ZVM_visit_1, "ZVM_visit_1")
+table_ZVM_visit_2 <- get_lm_summary_table(model_ZVM_visit_2, "ZVM_visit_2")
+
+table_ZMT_1_visit_1 <- get_lm_summary_table(model_ZMT_1_visit_1, "ZMT_1_visit_1")
+table_ZMT_1_visit_2 <- get_lm_summary_table(model_ZMT_1_visit_2, "ZMT_1_visit_2")
+
+table_ZMT_2_visit_1 <- get_lm_summary_table(model_ZMT_2_visit_1, "ZMT_2_visit_1")
+table_ZMT_2_visit_2 <- get_lm_summary_table(model_ZMT_2_visit_2, "ZMT_2_visit_2")
+
+table_ZVF_visit_1 <- get_lm_summary_table(model_ZVF_visit_1, "ZVF_visit_1")
+table_ZVF_visit_2 <- get_lm_summary_table(model_ZVF_visit_2, "ZVF_visit_2")
+
+table_ZToL_visit_1 <- get_lm_summary_table(model_ZToL_visit_1, "ZToL_visit_1")
+table_ZToL_visit_2 <- get_lm_summary_table(model_ZToL_visit_2, "ZToL_visit_2")
+
+# Объединение таблиц в одну
+final_table <- rbind(table_ZVM_visit_1, table_ZVM_visit_2, table_ZMT_1_visit_1, table_ZMT_1_visit_2, 
+                     table_ZMT_2_visit_1, table_ZMT_2_visit_2, table_ZVF_visit_1, table_ZVF_visit_2,
+                     table_ZToL_visit_1, table_ZToL_visit_2)
+
+# Вывод таблицы
+kable(final_table, format = "html")
+
 ```
 
 
-Строим смешанные модели:
 
-- ZVM ~ as.factor(`head rotation`) + `Total score PANSS` + `THF dose` + visit + (1 | id)
 
-- ZMT ~ as.factor(akathisia) + `Total score PANSS` + `THF dose` + visit + (1 | id) 
-
-- ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose` + visit + (1 | id)
-
-- ZVF ~ tremor + `Total score PANSS` + `THF dose` + visit + (1 | id)
-
-- ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose` + visit + (1 | id)
+#### Модели ЭПС логистическая регрессия
 
 
 ```{r}
-lmer(ZVM ~ as.factor(`head rotation`) + `Total score PANSS` + `THF dose` + visit + (1 | id), data = selected_data_ZVM, REML = FALSE) %>% summary()
-lmer(ZMT ~ as.factor(akathisia) + `Total score PANSS` + `THF dose` + visit + (1 | id), data = selected_data_ZMT, REML = FALSE) %>% summary()
-lmer(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose` + visit + (1 | id), data = selected_data_ZMT, REML = FALSE) %>% summary()
-lmer(ZVF ~ tremor + `Total score PANSS` + `THF dose` + visit + (1 | id), data = selected_data_ZVF, REML = FALSE) %>% summary()
-lmer(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose` + visit + (1 | id), data = selected_data_ZToL, REML = FALSE) %>% summary()
+data_for_logr <- data_filtered %>% 
+  mutate(
+    head_rotation_bin = ifelse(`head rotation` < 2, 0, 1),
+    tremor_bin = ifelse(tremor < 2, 0, 1),
+    akathisia_bin = ifelse(akathisia < 2, 0, 1),
+    )
+
+
+glm(head_rotation_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+glm(tremor_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+glm(akathisia_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered) %>% summary()
 ```
 
-#### Модели для вклада ЭПС терапии и симптомов шизофрении
-
-`head rotation` ~ CPZE
-
-tremor ~ CPZE + depression
-
-akathisia ~ CPZE + `Total score PANSS`
-
-`Total score SAS` ~ CPZE + `Total score PANSS`
+То же самое в виде таблицы
 
 ```{r}
-lm(`head rotation` ~ CPZE, data = data_filtered) %>% 
-  summary()
-lm(tremor ~ CPZE + depression, data = data_filtered) %>% 
-  summary()
-lm(akathisia ~ CPZE + `Total score PANSS`, data = data_filtered) %>% 
-  summary()
-lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered) %>% 
-  summary()
+library(broom)
+
+model_head <- glm(head_rotation_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_head <- tidy(model_head)
+model_tremor <- glm(tremor_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_tremor <- tidy(model_tremor)
+model_akathisia <- glm(akathisia_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_akathisia <- tidy(model_akathisia)
+model_total_score <- lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered)
+summary_total_score <- tidy(model_total_score)
+
+# Округляем коэффициенты до 3 знаков после запятой
+round_summary <- function(summary) {
+  summary$estimate <- round(summary$estimate, 3)
+  summary$std.error <- round(summary$std.error, 3)
+  summary$statistic <- round(summary$statistic, 3)
+  summary$p.value <- round(summary$p.value, 3)
+  return(summary)
+}
+
+# Объединяем и округляем результаты в одну таблицу
+result_table <- bind_rows(
+  mutate(round_summary(summary_head), Outcome = "Head Rotation"),
+  mutate(round_summary(summary_tremor), Outcome = "Tremor"),
+  mutate(round_summary(summary_akathisia), Outcome = "Akathisia"),
+  mutate(round_summary(summary_total_score), Outcome = "Total Score SAS")
+)
+
+# Выводим результаты
+print(result_table)
+
 ```
 
-
-
-`head rotation` ~ CPZE + visit + (1 | id)
-
-tremor ~ CPZE + depression + visit + (1 | id)
-
-akathisia ~ CPZE + `Total score PANSS` + visit + (1 | id)
-
-`Total score SAS` ~ CPZE + `Total score PANSS` + visit + (1 | id)
-
-```{r}
-lmer(`head rotation` ~ CPZE + visit + (1 | id), data = data_filtered, REML = FALSE) %>% summary()
-lmer(tremor ~ CPZE + depression + visit + (1 | id), data = data_filtered, REML = FALSE) %>% summary()
-lmer(akathisia ~ CPZE + `Total score PANSS` + visit + (1 | id), data = data_filtered, REML = FALSE) %>% summary()
-lmer(akathisia ~ CPZE + `Total score PANSS` + visit + (1 | id), data = data_filtered, REML = FALSE) %>% summary()
-```

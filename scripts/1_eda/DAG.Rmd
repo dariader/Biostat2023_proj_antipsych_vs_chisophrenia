@@ -114,11 +114,8 @@ coords <- list(
         SCZ = 6,
         EDUC = 0,
         GEND = 2,
-<<<<<<< HEAD
         AGE = 6,
-=======
         AGE = 4,
->>>>>>> 679f139f691ccf74d46273e51b4495726d63389f
         SMOK = 6,
         CTYP = 4,
         AMAN = 5,
@@ -131,13 +128,7 @@ coords <- list(
 dag <- ggdag::dagify(
   EPS  ~ APD + TGF + SCZ + DEP + NSYM + INMT,
   COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK + INMT, 
-<<<<<<< HEAD
-  EPS  ~ DEP + APD + TGF + GEND + AGE + SMOK,
-  NSYM ~ SCZ,
-  DEP ~ SCZ,
-=======
   EPS  ~ DEP + APD + TGF + SCZ + GEND + AGE + SMOK,
->>>>>>> 679f139f691ccf74d46273e51b4495726d63389f
   exposure = "EPS",
   outcome = "COGN",
   coords = coords
