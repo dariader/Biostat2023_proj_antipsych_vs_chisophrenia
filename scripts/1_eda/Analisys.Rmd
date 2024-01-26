@@ -1,0 +1,617 @@
+---
+title: "EDA"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+  word_document:
+    toc: true
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# List of libraries to install if not already installed
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet")
+
+# Check and install libraries
+for (library_name in libraries_to_install) {
+  if (!requireNamespace(library_name, quietly = TRUE)) {
+    install.packages(library_name, dependencies = TRUE)
+  }
+}
+
+library(tidyverse)
+library(ggplot2)
+library(writexl)
+library(openxlsx)
+library(shiny)
+library(kableExtra)
+library(broom)
+library(here)
+library(psych)
+library(lme4)
+library(lmerTest)
+library(broom)
+library(nnet)
+library(dagitty)
+library(ggdag)
+library(reshape2)
+library(reshape)
+```
+
+# 1. EDA
+
+```{r}
+path <- here("data", "Data_SAS.xlsx")
+data <- readxl::read_xlsx(path, sheet = 2)
+# data %>% glimpse()
+# data %>% summary()
+```
+
+## 1.1 Data checking 
+
+```{r}
+# Copying the original dataframe
+data_filtered <- data
+
+# Converting numerical columns to numeric format
+numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
+                          "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
+                          "glabella tap", "tremor", "salivation", "akathisia", "Total score SAS",
+                          "P1", "P2", "P3", "P4", "P5", "P6", "P7", "Positive scale",
+                          "N1", "N2", "N3", "N4", "N5", "N6", "N7", "Negative scale",
+                          "G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
+                          "G11", "G12", "G13", "G14", "G15", "G16", "General Psychopathology scale",
+                          "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
+                          "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
+                          "Tower of London", "ZToL", "Comp Z")
+
+# Changing all decimal separators to dots
+data_filtered[numeric_columns] <- lapply(data_filtered[numeric_columns], function(x) {
+  as.numeric(gsub(",", ".", x))
+})
+
+# Converting categorical columns to factors
+factor_columns <- c("gender", "visit", "antipsychotic","antipsychotic dose", 
+                    "course", "education", "smoke", "antipsychotic generation")
+
+data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor)
+
+#data_filtered %>% glimpse()
+```
+
+Checking if PANSS is calculated correctly
+
+```{r}
+# Creating columns
+data_compare <- data_filtered %>%
+  mutate(
+    Positive_scale_auto = rowSums(select(., P1:P7)),
+    Negative_scale_auto = rowSums(select(., N1:N7)),
+    General_Psychopathology_scale_auto = rowSums(select(., G1:G16)),
+    Total_score_PANSS_auto = Positive_scale_auto + Negative_scale_auto + General_Psychopathology_scale_auto
+  )
+
+# Comparing
+differences_pos_scale <- data_compare %>%
+  filter(`Positive scale` != Positive_scale_auto)
+
+differences_neg_scale <- data_compare %>%
+  filter(`Negative scale` != Negative_scale_auto)
+
+differences_gen_psychopathology <- data_compare %>%
+  filter(`General Psychopathology scale` != General_Psychopathology_scale_auto)
+
+differences_total_panss <- data_compare %>%
+  filter(`Total score PANSS` != Total_score_PANSS_auto)
+
+# Displaying results
+cat("Differences in Positive scale:\n")
+print(differences_pos_scale[, c("id", "Positive scale", "Positive_scale_auto")])
+
+cat("\nDifferences in Negative scale:\n")
+print(differences_neg_scale[, c("id", "Negative scale", "Negative_scale_auto")])
+
+cat("\nDifferences in General Psychopathology scale:\n")
+print(differences_gen_psychopathology[, c("id", "General Psychopathology scale", "General_Psychopathology_scale_auto")])
+
+cat("\nDifferences in Total score PANSS:\n")
+print(differences_total_panss[, c("id", "Total score PANSS", "Total_score_PANSS_auto")])
+```
+
+Errors were detected in Total score SAS, Positive scale, Negative scale, General Psychopathology scale, Total score PANSS.
+Errors were also identified in all BACS.
+
+## 1.2 Error Correction
+ A script, preprocessing.R, has been created to replace incorrect data:
+ - Corrects identified errors in the scales.
+ - Adds a 5-factor model.
+ - Adds chlorpromazine equivalents.
+ - Creates Data_SAS_fixed.xlsx in _misc.
+
+```{r}
+path <- here("scripts/0_preprocessing", "preprocessing.R")
+source(path)
+path <- here("data", "Data_SAS.xlsx")
+data_filtered <- preprocessing(path)
+```
+
+## 1.3 EDA - fixed data
+
+```{r}
+data_filtered %>% 
+  select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  describe() %>% 
+  select(vars, n, mean, sd, median, min, max, range) %>% 
+  round(3) %>% 
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
+```
+
+EDA using Shiny
+```{r eval=FALSE}
+path <- here("scripts/1_eda", "eda_shiny_func.R")
+source(path)
+eda_shiny(data_filtered)
+```
+
+# 2. DAG 
+
+```{r}
+coords <- list(
+  x = c(EPS  = 0, 
+        COGN = 8,
+        APD = 4, 
+        TGF = 4,
+        SCZ = 4,
+        EDUC = 12,
+        GEND = 12,
+        AGE = 9,
+        SMOK = 12,
+        CTYP = 12,
+        AMAN = 12,
+        DEP = 0,
+        NSYM = -2,
+        INMT = 4),
+  y = c(EPS  = 1, 
+        COGN = 1,
+        APD = -1, 
+        TGF = 2,
+        SCZ = 6,
+        EDUC = 0,
+        GEND = 2,
+        AGE = 6,
+        AGE = 4,
+        SMOK = 6,
+        CTYP = 4,
+        AMAN = 5,
+        DEP = 4,
+        NSYM = 4,
+        INMT = -2)
+)
+
+# Создание DAG
+dag <- ggdag::dagify(
+  EPS  ~ APD + TGF + SCZ + DEP + NSYM + INMT,
+  COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK + INMT, 
+  EPS  ~ DEP + APD + TGF + SCZ + GEND + AGE + SMOK,
+  exposure = "EPS",
+  outcome = "COGN",
+  coords = coords
+)
+
+# Визуализация DAG с ggplot2
+ggdag(dag, text_size = 4) +
+  theme_dag()
+```
+# 3. Dynamics
+
+ Creating a dataframe containing the difference in quantitative indicators between visits.
+ Using make_difference_df.R
+
+```{r}
+path <- here("scripts/0_preprocessing", "make_difference_df.R")
+source(path)
+difference_df <- make_dif_df(data_filtered)
+difference_df
+```
+
+## 3.1 Difference between visits
+```{r}
+difference_df %>%
+  gather(variable, value, -id) %>%
+  filter(!grepl("G[1-9]|N[1-7]|P[1-7]_dif$", variable)) %>%
+  group_by(variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>%
+  filter(grepl("_dif$", variable)) %>%
+  mutate(variable = gsub("_dif$", "", variable)) %>%
+  filter(variable %in% c("Total score PANSS", "tremor", "akathisia", "head rotation", "Total score SAS", "ZVM", "ZTol", "ZMT", "ZVF", "Comp Z")) %>% 
+  mutate(variable = case_when(
+    variable == "ZVM" ~ "Verbal Memory",
+    variable == "ZMT" ~ "Motor Test",
+    variable == "ZVF" ~ "Speech Fluency",
+    variable == "ZTol" ~ "Tower of London",
+    variable == "Comp Z" ~ "Composite BACS Score",
+    variable == "tremor" ~ "Tremor",
+    variable == "akathisia" ~ "Akathisia",
+    variable == "head rotation" ~ "Head Rotation",
+    variable == "Total score SAS" ~ "Total score SAS",
+    TRUE ~ variable
+  )) %>%
+  mutate(variable = factor(variable, levels = c("Total score PANSS", "Verbal Memory", "Motor Test", "Speech Fluency", "Tower of London", "Composite BACS Score", "Tremor", "Akathisia", "Head Rotation", "Total score SAS"))) %>%
+  ggplot(aes(x = variable, y = mean_value, fill = factor(sign(mean_value)))) +
+  geom_bar(stat = "identity", color = "black") +
+  scale_fill_manual(values = c("#6600FF", "#CC3333", "green"), name = "Sign", labels = c("Negative", "Zero", "Positive")) +
+  labs(title = "Mean Deviation of Variables",
+       x = "Variables",
+       y = "Mean Deviation") +
+  theme_minimal() +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+```
+
+## 3.2 Correlation analysis
+
+```{r}
+text_data <- "
+,gait_week_2,gait_week_8,arm_dropping_week_2,depression_week_8,shoulder_shaking_week_2,elbow_rigidity_week_2,elbow_rigidity_week_8,head_rotation_week_2,head_rotation_week_8,glabella_tap_week_2,tremor_week_2,tremor_week_8,salivation_week_2,salivation_week_8,akathisia_week_2,akathisia_week_8,Total_score_SAS_week_2,Total_score_SAS_week_8
+ZVM_week_2,,,-0.342,,,,,-0.297,-0.314,,,,,,,,,
+ZVM_week_8,,,-0.471,,,,,,-0.344,,,,,,-0.29,,,
+ZMT_week_2,,,,,,,,,,,,,,,-0.28,,-0.335,
+ZMT_week_8,,-0.412,,,-0.409,-0.334,-0.313,,,-0.315,,,,,-0.281,-0.378,-0.376,-0.395
+ZVF_week_2,,,,,,,,,,,-0.326,,,,,,,
+ZVF_week_8,,,-0.308,,,,,,-0.3,,-0.364,-0.335,,,,,-0.25,
+ZSC_week_8,,,,0.237,,,,,,,,,,,,,,
+ZToL_week_2,-0.274,-0.315,,,-0.281,,,-0.249,,,,,-0.357,-0.317,,,-0.407,-0.329
+ZToL_week_8,,-0.347,,,,,,-0.321,,,,,-0.361,-0.283,,,-0.362,-0.306
+Comp_Z_week_2,,,-0.318,,,,,-0.314,,,,,,,,,-0.293,
+Comp_Z_week_8,,,-0.291,,,,,,,,,,,,-0.286,,,
+"
+
+# Create a data frame with row names
+your_data <- as.data.frame(read.table(text = text_data, sep = ",", row.names = 1, header = TRUE, quote = ""))
+
+# Extract row names and column names
+row_names <- rownames(your_data)
+col_names <- colnames(your_data)
+
+
+# Replace underscores with spaces
+row_names <- gsub("_", " ", row_names)
+col_names <- gsub("_", " ", col_names)
+
+
+# Convert to a data frame
+df <- your_data
+df$row_names <- row_names
+
+# Load library with suppressed messages
+suppressMessages(library(plotly))
+
+# Melt the data for ggplot
+melted_df <- reshape2::melt(df, id.vars = "row_names", variable.name = "col_names")
+
+# Create the heatmap using ggplot2
+ggplot(melted_df, aes(x = col_names, y = row_names, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-0.5, 0.5)) +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), axis.title = element_blank())+  
+  scale_x_discrete(labels = col_names)+coord_flip()
+```
+
+```{r}
+text_data <- "
+,depression_week_8,CPZE_week_2,THF_dose_within_visits,course_within_visits,smoke_within_visits
+ZMT_week_2,,,-0.311,,0.315
+ZMT_week_8,,,-0.305,0.363,
+ZSC_week_8,0.237,,,,
+Comp_Z_week_8,,-0.293,,,
+"
+
+# Create a data frame with row names
+your_data <- as.data.frame(read.table(text = text_data, sep = ",", row.names = 1, header = TRUE, quote = ""))
+
+# Extract row names and column names
+row_names <- rownames(your_data)
+col_names <- colnames(your_data)
+
+
+# Replace underscores with spaces
+row_names <- gsub("_", " ", row_names)
+col_names <- gsub("_", " ", col_names)
+
+
+# Convert to a data frame
+df <- your_data
+df$row_names <- row_names
+
+
+# Melt the data for ggplot
+melted_df <- reshape2::melt(df, id.vars = "row_names", variable.name = "col_names")
+
+# Create the heatmap using ggplot2
+ggplot(melted_df, aes(x = col_names, y = row_names, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-0.5, 0.5)) +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), axis.title = element_blank())+  
+  scale_x_discrete(labels = col_names)+coord_flip()
+```
+
+```{r}
+text_data <- "
+,positive_week_8,negative_week_2,negative_week_8,depression_week_2,depression_week_8,cognitive_week_2,cognitive_week_8,excitment_week_8,Total.score.PANSS_week_2,Total.score.PANSS_week_8,CPZE_week_2,antipsychotic.generation_within_visits,THF.dose_within_visits,age_within_visits,course_within_visits
+arm_dropping_week_2,,,,,,,,,,,,,0.296,,
+shoulder_shaking_week_2,,,0.253,,,,,,,,,,0.274,,
+elbow_rigidity_week_2,,0.423,0.462,0.454,0.322,,,,0.363,0.35,,,0.251,,
+elbow_rigidity_week_8,,0.313,0.325,0.326,,,,,,0.313,,,,,
+head_rotation_week_2,,,,,,,,,,,,,,,-0.322
+head_rotation_week_8,,,,,,,,,,,,,,,
+glabella_tap_week_2,,,0.28,,0.33,,,,,0.323,0.278,,,0.354,
+glabella_tap_week_8,0.277,0.316,0.288,0.351,0.351,0.411,0.308,,0.436,0.424,,,,0.273,
+tremor_week_8,,,,0.357,,,,,,,,,,,
+salivation_week_2,,,,,,,,,,,,-0.344,0.305,,
+salivation_week_8,,0.405,,0.313,,,,,0.307,,,-0.275,,,
+akathisia_week_2,,0.325,,0.343,0.314,,,,0.37,0.29,0.282,,0.377,,
+akathisia_week_8,,,,,,,,,,,,,0.312,,
+Total_score_SAS_week_2,,,,0.319,,,,,,0.305,,,0.493,,
+Total_score_SAS_week_8,,0.336,0.341,0.476,0.249,0.282,0.237,0.293,0.381,0.403,,,0.295,,
+"
+
+# Create a data frame with row names
+your_data <- as.data.frame(read.table(text = text_data, sep = ",", row.names = 1, header = TRUE, quote = ""))
+
+# Extract row names and column names
+row_names <- rownames(your_data)
+col_names <- colnames(your_data)
+
+
+# Replace underscores with spaces
+row_names <- gsub("_", " ", row_names)
+col_names <- gsub("_", " ", col_names)
+
+
+# Convert to a data frame
+df <- your_data
+df$row_names <- row_names
+
+
+# Melt the data for ggplot
+melted_df <- reshape2::melt(df, id.vars = "row_names", variable.name = "col_names")
+
+# Create the heatmap using ggplot2
+ggplot(melted_df, aes(x = col_names, y = row_names, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", midpoint = 0, limit = c(-0.5, 0.5)) +
+  theme_minimal() +
+  theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), axis.title = element_blank())+  
+  scale_x_discrete(labels = col_names)+coord_flip()
+```
+
+# 4. Building models
+
+## 4.1 Cognitive assessment models
+
+1.1.1 ZVM ~ `Total score PANSS` + `THF dose`
+
+1.1.2 ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`
+
+1.2.1 ZMT ~ `Total score PANSS` + `THF dose`
+
+1.2.2 ZMT ~ akathisia + `Total score PANSS` + `THF dose`
+
+1.3. ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`
+
+1.4.1 ZVF ~ tremor + `Total score PANSS` + `THF dose`
+
+1.4.2 ZVF ~ `Total score PANSS` + `THF dose`
+
+1.5 ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`
+
+```{r}
+model_1_1_1 <- lm(ZVM ~ `Total score PANSS` + `THF dose`, data = data_filtered)
+model_1_1_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = data_filtered)
+
+model_1_2_1 <- lm(ZMT ~ `Total score PANSS` + `THF dose`, data = data_filtered)
+model_1_2_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = data_filtered)
+
+model_1_3 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered)
+
+model_1_4_1 <- lm(ZVF ~ `Total score PANSS` + `THF dose`, data = data_filtered)
+
+model_1_4_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = data_filtered)
+
+model_1_5 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered) 
+```
+
+We compare pairwise and take p-value
+
+- model_1_1_1 and model_1_1_2
+
+- model_1_2_1 and model_1_2_2
+
+- model_1_4_1 and model_1_4_2
+
+For models model_1_3 and model_1_5 we take p-value for `Total score SAS`
+Benjamin Hochberg's correction was used.
+
+```{r}
+# Comparing models using anova
+anova_result_1 <- anova(model_1_1_1, model_1_1_2)
+anova_result_2 <- anova(model_1_2_1, model_1_2_2)
+summary_3 <- model_1_3 %>% summary()
+anova_result_4 <- anova(model_1_4_1, model_1_4_2)
+summary_5 <- model_1_5 %>% summary()
+
+# Extracting p-values from the second element of the array Pr(>F) for each comparison
+p_value_1 <- anova_result_1$`Pr(>F)`[2]
+p_value_2 <- anova_result_2$`Pr(>F)`[2]
+p_value_3 <- summary_3$coefficients[14]
+p_value_4 <- anova_result_4$`Pr(>F)`[2]
+p_value_5 <- summary_5$coefficients[14]
+
+# Creating a tibble with p-values
+tibble(
+  Model = c("ZVM", "ZMT_1", "ZMT_2", "ZVF", "ZToL"),
+  P_Value = round(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), 3), 
+  P_Adjusted = round(p.adjust(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), method = "BH"), 3)
+)
+```
+
+```{r}
+# Creating a function to obtain summary and convert it to a table
+get_lm_summary_table <- function(model, dependent_variable) {
+  summary_data <- summary(model)
+  
+  # Extracting the desired data from summary
+  coefficients <- summary_data$coefficients[, c("Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+  
+  # Creating a table
+  table_data <- as.data.frame(coefficients)
+  table_data$Variable <- rownames(coefficients)
+  rownames(table_data) <- NULL
+  
+  # Rounding to 3 decimal places
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
+  # Adding the name of the dependent variable
+  table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
+  
+  return(table_data)
+}
+
+# Obtaining tables for each model
+table_ZVM_1 <- get_lm_summary_table(model_1_1_1, "ZVM_1")
+table_ZVM_2 <- get_lm_summary_table(model_1_1_2, "ZVM_2")
+
+table_ZMT_1_1 <- get_lm_summary_table(model_1_2_1, "ZMT_1_1")
+table_ZMT_1_2 <- get_lm_summary_table(model_1_2_2, "ZMT_1_2")
+
+table_ZMT_2 <- get_lm_summary_table(model_1_3, "ZMT_2")
+
+table_ZVF_1 <- get_lm_summary_table(model_1_4_1, "ZVF_1")
+table_ZVF_2 <- get_lm_summary_table(model_1_4_2, "ZVF_2")
+
+table_ZToL <- get_lm_summary_table(model_1_5, "ZToL")
+
+# Combining tables into one
+final_table <- rbind(table_ZVM_1, table_ZVM_2, table_ZMT_1_1, table_ZMT_1_2, table_ZMT_2, table_ZVF_1, table_ZVF_2, table_ZToL)
+
+# Displaying the table
+kable(final_table, format = "html")
+
+```
+Divide by visits
+
+```{r}
+model_ZVM_visit_1 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1))
+model_ZVM_visit_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==2))
+
+model_ZMT_1_visit_1 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1))
+model_ZMT_1_visit_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==2))
+
+model_ZMT_2_visit_1 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1)) 
+model_ZMT_2_visit_2 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==2)) 
+
+model_ZVF_visit_1 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1))
+model_ZVF_visit_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==2))
+
+model_ZToL_visit_1 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1)) 
+model_ZToL_visit_2 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = data_filtered %>% filter(visit==1))
+
+# Creating a function to obtain summary and convert it to a table
+get_lm_summary_table <- function(model, dependent_variable) {
+  summary_data <- summary(model)
+  
+  # Extracting the desired data from summary
+  coefficients <- summary_data$coefficients[, c("Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+  
+  # Creating a table
+  table_data <- as.data.frame(coefficients)
+  table_data$Variable <- rownames(coefficients)
+  rownames(table_data) <- NULL
+  
+  # Rounding to 3 decimal places
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
+  # Adding the name of the dependent variable
+  table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
+  
+  return(table_data)
+}
+
+# Obtaining tables for each model
+table_ZVM_visit_1 <- get_lm_summary_table(model_ZVM_visit_1, "ZVM_visit_1")
+table_ZVM_visit_2 <- get_lm_summary_table(model_ZVM_visit_2, "ZVM_visit_2")
+
+table_ZMT_1_visit_1 <- get_lm_summary_table(model_ZMT_1_visit_1, "ZMT_1_visit_1")
+table_ZMT_1_visit_2 <- get_lm_summary_table(model_ZMT_1_visit_2, "ZMT_1_visit_2")
+
+table_ZMT_2_visit_1 <- get_lm_summary_table(model_ZMT_2_visit_1, "ZMT_2_visit_1")
+table_ZMT_2_visit_2 <- get_lm_summary_table(model_ZMT_2_visit_2, "ZMT_2_visit_2")
+
+table_ZVF_visit_1 <- get_lm_summary_table(model_ZVF_visit_1, "ZVF_visit_1")
+table_ZVF_visit_2 <- get_lm_summary_table(model_ZVF_visit_2, "ZVF_visit_2")
+
+table_ZToL_visit_1 <- get_lm_summary_table(model_ZToL_visit_1, "ZToL_visit_1")
+table_ZToL_visit_2 <- get_lm_summary_table(model_ZToL_visit_2, "ZToL_visit_2")
+
+# Combining tables into one
+final_table <- rbind(table_ZVM_visit_1, table_ZVM_visit_2, table_ZMT_1_visit_1, table_ZMT_1_visit_2, 
+                     table_ZMT_2_visit_1, table_ZMT_2_visit_2, table_ZVF_visit_1, table_ZVF_visit_2,
+                     table_ZToL_visit_1, table_ZToL_visit_2)
+
+# Displaying the table
+kable(final_table, format = "html")
+```
+## 4.2 EPS models logistic regression
+
+```{r}
+data_for_logr <- data_filtered %>% 
+  mutate(
+    head_rotation_bin = ifelse(`head rotation` < 2, 0, 1),
+    tremor_bin = ifelse(tremor < 2, 0, 1),
+    akathisia_bin = ifelse(akathisia < 2, 0, 1),
+    )
+
+model_head <- glm(head_rotation_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_head <- tidy(model_head)
+model_tremor <- glm(tremor_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_tremor <- tidy(model_tremor)
+model_akathisia <- glm(akathisia_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_akathisia <- tidy(model_akathisia)
+model_total_score <- lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered)
+summary_total_score <- tidy(model_total_score)
+
+# Rounding coefficients to 3 decimal places
+round_summary <- function(summary) {
+  summary$estimate <- round(summary$estimate, 3)
+  summary$std.error <- round(summary$std.error, 3)
+  summary$statistic <- round(summary$statistic, 3)
+  summary$p.value <- round(summary$p.value, 3)
+  return(summary)
+}
+
+# Combining and rounding the results into one table
+result_table <- bind_rows(
+  mutate(round_summary(summary_head), Outcome = "Head Rotation"),
+  mutate(round_summary(summary_tremor), Outcome = "Tremor"),
+  mutate(round_summary(summary_akathisia), Outcome = "Akathisia"),
+  mutate(round_summary(summary_total_score), Outcome = "Total Score SAS")
+)
+
+# Displaying the results
+print(result_table)
+```
+

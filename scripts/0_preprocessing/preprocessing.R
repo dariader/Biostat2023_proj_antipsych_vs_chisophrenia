@@ -18,6 +18,7 @@ output <- here("scripts/_misc", "Data_SAS_fixed.xlsx")
 preprocessing <- function(filename) {
   data <- readxl::read_xlsx(filename, sheet = 2)
   data$'antipsychotic generation' <- sub("\\.0$", "", data$'antipsychotic generation')
+  data$smoke <- sub("\\.0$", "", data$smoke)
   # Переводим числовые столбцы в числовой формат
   numeric_columns <- c("age", "disease duration", "THF dose", "gait", "arm dropping",
                        "shoulder shaking", "elbow rigidity", "wrist rigidity", "head rotation",
@@ -29,10 +30,25 @@ preprocessing <- function(filename) {
                        "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
                        "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
                        "Tower of London", "ZToL", "Comp Z")
-  
+
   factor_columns <- c("gender", "visit", "antipsychotic",
                       "course", "education", "smoke", "antipsychotic generation")
-  
+
+  numeric_columns_resulting <- c("age", "disease duration", "THF dose", "Total score SAS",
+                       "Positive scale",
+                       "Negative scale",
+                       "General Psychopathology scale",
+                       "Total score PANSS", "Verbal Memory", "ZVM", "Digit Sequencing", "ZDS",
+                       "Token Motor Task", "ZMT", "Verbal Fluency", "ZVF", "Symbol Coding", "ZSC",
+                       "Tower of London", "ZToL", "Comp Z")
+
+  factor_columns_resulting <- c("gender", "visit", "antipsychotic",
+                      "course", "education", "smoke", "antipsychotic generation", "gait", "P1", "P2", "P3", "P4", "P5",
+                      "P6", "P7","N1", "N2", "N3", "N4", "N5", "N6", "N7","G1", "G2", "G3", "G4", "G5", "G6", "G7", "G8", "G9", "G10",
+                       "G11", "G12", "G13", "G14", "G15", "G16")
+
+
+
   # все десятичные разделители делаем точками
   data[numeric_columns] <- lapply(data[numeric_columns], function(x) {
     as.numeric(gsub(",", ".", x))
@@ -141,8 +157,15 @@ preprocessing <- function(filename) {
            )) %>%
     mutate(CPZE = round(CPZE, 2),
            `antipsychotic dose` = as.factor(`antipsychotic dose`))
-  
+
+  # все десятичные разделители делаем точками
+  data[numeric_columns_resulting] <- lapply(data[numeric_columns_resulting], function(x) {
+    as.numeric(gsub(",", ".", x))
+  })
+
+  data[factor_columns_resulting] <- lapply(data[factor_columns_resulting], as.factor)
+
   # запись в файл
-  write.xlsx(data, file = output, sheetName="data_filtered", append=TRUE)
+#  write.xlsx(data, file = output, sheetName="data_filtered", append=TRUE)
   return(data)
 }

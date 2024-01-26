@@ -69,6 +69,7 @@ coordinates(dag) <- list(
 # Визуализация DAG
 plot(dag)
 ```
+
 Ковариационная матрица (корреляционная матрица)
 
 ```{r}
@@ -85,60 +86,66 @@ adjustmentSets(dag)
 
 Используем пакет ggdag
 
+Сделаем короткие названия
+ 
 ```{r}
 library(ggplot2)
 library(ggdag)
 
 coords <- list(
-  x = c(EXTRAPYRAMIDAL_SYMPTOMS = 0, 
-        COGNITIVE_FUNCTIONS = 8,
-        ANTIPSYCHOTICS = 4, 
+  x = c(EPS  = 0, 
+        COGN = 8,
+        APD = 4, 
         TGF = 4,
-        SCHIZOPHRENIA = 4,
-        EDUCATION = 12,
-        GENDER = 12,
-        AGE = 12,
-        SMOKING = 12,
-        COURSE_TYPE = 12,
-        AGE_MANIFEST = 12,
-        DEPRESSION = -2,
-        NEGATIVE_SYMPTOMS = -2),
-  y = c(EXTRAPYRAMIDAL_SYMPTOMS = 1, 
-        COGNITIVE_FUNCTIONS = 1,
-        ANTIPSYCHOTICS = -1, 
+        SCZ = 4,
+        EDUC = 12,
+        GEND = 12,
+        AGE = 9,
+        SMOK = 12,
+        CTYP = 12,
+        AMAN = 12,
+        DEP = 0,
+        NSYM = -2,
+        INMT = 4),
+  y = c(EPS  = 1, 
+        COGN = 1,
+        APD = -1, 
         TGF = 2,
-        SCHIZOPHRENIA = 4,
-        EDUCATION = 0,
-        GENDER = 1,
-        AGE = 2,
-        SMOKING = 3,
-        COURSE_TYPE = 4,
-        AGE_MANIFEST = 5,
-        DEPRESSION = -1,
-        NEGATIVE_SYMPTOMS = 4)
+        SCZ = 6,
+        EDUC = 0,
+        GEND = 2,
+        AGE = 6,
+        AGE = 4,
+        SMOK = 6,
+        CTYP = 4,
+        AMAN = 5,
+        DEP = 4,
+        NSYM = 4,
+        INMT = -2)
 )
 
 # Создание DAG
 dag <- ggdag::dagify(
-  EXTRAPYRAMIDAL_SYMPTOMS ~  ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA + DEPRESSION + NEGATIVE_SYMPTOMS,
-  COGNITIVE_FUNCTIONS ~ EXTRAPYRAMIDAL_SYMPTOMS + EXTRAPYRAMIDAL_SYMPTOMS + ANTIPSYCHOTICS + TGF + SCHIZOPHRENIA + EDUCATION + GENDER + AGE + SMOKING, 
-  EXTRAPYRAMIDAL_SYMPTOMS ~ DEPRESSION + ANTIPSYCHOTICS + TGF  + SCHIZOPHRENIA,
-  NEGATIVE_SYMPTOMS ~ DEPRESSION + EXTRAPYRAMIDAL_SYMPTOMS,
-  DEPRESSION ~ NEGATIVE_SYMPTOMS + EXTRAPYRAMIDAL_SYMPTOMS,
-  exposure = "EXTRAPYRAMIDAL_SYMPTOMS",
-  outcome = "COGNITIVE_FUNCTIONS",
+  EPS  ~ APD + TGF + SCZ + DEP + NSYM + INMT,
+  COGN ~ EPS  + EPS  + APD + TGF + SCZ + EDUC + GEND + AGE + SMOK + INMT, 
+  EPS  ~ DEP + APD + TGF + SCZ + GEND + AGE + SMOK,
+  exposure = "EPS",
+  outcome = "COGN",
   coords = coords
 )
 
 # Визуализация DAG с ggplot2
-ggdag(dag, text_size = 2) +
-  theme_dag() +
-  theme_minimal()
+ggdag(dag, text_size = 4) +
+  theme_dag()
 ```
 
-```{r}
-adjustmentSets(dag)
+
+```{r, fig.width=10, fig.height=8}
+ggdag_adjustment_set(dag, shadow = T) +
+    theme_dag()
 ```
+
+
 
 ```{r}
 impliedConditionalIndependencies(dag)

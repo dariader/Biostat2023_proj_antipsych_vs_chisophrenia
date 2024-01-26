@@ -6,13 +6,16 @@ output:
     toc: true
     toc_depth: 3
     toc_float: true
+  word_document:
+    toc: true
+    toc_depth: '3'
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 # Список библиотек для установки, если их нет
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC")
+libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet")
 
 # Проверка и установка библиотек
 for (library_name in libraries_to_install) {
@@ -29,6 +32,11 @@ library(shiny)
 library(kableExtra)
 library(broom)
 library(here)
+library(psych)
+library(lme4)
+library(lmerTest)
+library(broom)
+library(nnet)
 ```
 
 # EDA
@@ -73,6 +81,8 @@ data_filtered[factor_columns] <- lapply(data_filtered[factor_columns], as_factor
 
 #data_filtered %>% glimpse
 ```
+
+
 
 ## Проверка шкал
 
@@ -253,7 +263,7 @@ print(differences_Comp_Z[, c("id", "Comp Z", "Comp_Z_auto")])
 Так же выявлены ошибки во всех BACS.
 
 
-## Испрвление ошибок
+## Исправление ошибок
 Для замены данных правильными, создан скрипт preprocessing.R: 
 
 - Исправиляет найденные ошибки в шкалах.
@@ -275,19 +285,35 @@ data_filtered <- preprocessing(path)
 
 ```{r}
 # data_filtered %>%
-#  glimpse()
+# glimpse()
+# data_filtered %>% colnames()
+```
+
+```{r}
+data_filtered %>% 
+  select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  describe() %>% 
+  select(vars, n, mean, sd, median, min, max, range) %>% 
+  round(3) %>% 
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 
 
-EDA с помощью Shiny
+```{r}
+data_filtered %>% 
+  select("gender", "age", "disease duration", "antipsychotic dose", "antipsychotic generation", "THF dose", "course", "education", "smoke", "visit", "Total score SAS", "Total score PANSS", "Comp Z", "CPZE") %>% 
+  summary() %>% 
+  kable("html") %>%
+  kable_styling("striped", full_width = FALSE)
+```
+
+## EDA с помощью Shiny
 
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "eda_shiny_func.R")
 source(path)
 eda_shiny(data_filtered)
-```
-```{r}
-data_filtered %>% str()
 ```
 
 
@@ -370,34 +396,13 @@ significant_variables %>%
 ```
 
 Создадим датафрейм, содержащие разницу количественных показателей между визитами.
+Для этого используем make_difference_df.R
 
 ```{r}
-# Выбираем только числовые переменные
-selected_variables <- data_filtered %>%
-  select_if(is.numeric) %>% 
-  names()
-
-# переменные которые не нужно вычитать
-add_df <- data_filtered %>% 
-  filter(visit == 1) %>% 
-  select(id, age, `disease duration`, `THF dose`, CPZE)
-
-# Создаем новый датафрейм для хранения разницы
-difference_df <- data_filtered %>%
-  select(id, visit, all_of(selected_variables)) %>%
-  group_by(id) %>%
-  summarise(across(selected_variables, ~diff(.))) %>% 
-  mutate(age = add_df$age,
-         `disease duration` = add_df$`disease duration`,
-         `THF dose` = add_df$`THF dose`, 
-         CPZE = add_df$CPZE
-         ) %>% 
-  rename_with(~paste0(., "_dif"), -c(id, age, `disease duration`, `THF dose`, CPZE))  # Добавляем суффикс "_dif" 
+path <- here("scripts/0_preprocessing", "make_difference_df.R")
+source(path)
+difference_df <- make_dif_df(data_filtered)
 difference_df
-```
-
-```{r}
-difference_df %>% str()
 ```
  Визуализируем: 
  
@@ -416,6 +421,7 @@ difference_df %>%
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
+
 Тоже самое более кратко.
 
 ```{r}
@@ -437,6 +443,44 @@ difference_df %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
+Выберем нужное для презентации
+
+```{r}
+difference_df %>%
+  gather(variable, value, -id) %>%
+  filter(!grepl("G[1-9]|N[1-7]|P[1-7]_dif$", variable)) %>%
+  group_by(variable) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>%
+  filter(grepl("_dif$", variable)) %>%
+  mutate(variable = gsub("_dif$", "", variable)) %>%
+  filter(variable %in% c("Total score PANSS", "tremor", "akathisia", "head rotation", "Total score SAS", "ZVM", "ZTol", "ZMT", "ZVF", "Comp Z")) %>% 
+  mutate(variable = case_when(
+    variable == "ZVM" ~ "Verbal Memory",
+    variable == "ZMT" ~ "Motor Test",
+    variable == "ZVF" ~ "Speech Fluency",
+    variable == "ZTol" ~ "Tower of London",
+    variable == "Comp Z" ~ "Composite BACS Score",
+    variable == "tremor" ~ "Tremor",
+    variable == "akathisia" ~ "Akathisia",
+    variable == "head rotation" ~ "Head Rotation",
+    variable == "Total score SAS" ~ "Total score SAS",
+    TRUE ~ variable
+  )) %>%
+  mutate(variable = factor(variable, levels = c("Total score PANSS", "Verbal Memory", "Motor Test", "Speech Fluency", "Tower of London", "Composite BACS Score", "Tremor", "Akathisia", "Head Rotation", "Total score SAS"))) %>%
+  ggplot(aes(x = variable, y = mean_value, fill = factor(sign(mean_value)))) +
+  geom_bar(stat = "identity", color = "black") +
+  scale_fill_manual(values = c("#6600FF", "#CC3333", "green"), name = "Sign", labels = c("Negative", "Zero", "Positive")) +
+  labs(title = "Mean Deviation of Variables",
+       x = "Variables",
+       y = "Mean Deviation") +
+  theme_minimal() +
+  guides(fill = FALSE) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+
+
+```
+
+
 EDA difference_df в shiny доступна только для числовых переменнных.
 
 Доступна только вкладка "Числовые переменные" без разбития по visit.
@@ -449,7 +493,7 @@ eda_shiny(difference_df)
 
 ## Строим модель
 
-### Первые модели
+### Первые модели для Comp_Z_dif
 
 Простая модель, включающая только `Total score SAS_dif`, `Total score PANSS_dif`. Предсказываем  `Comp Z_dif`
 
@@ -476,6 +520,7 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %>%
   step(trace=0) %>%
   summary()
 ```
+
 ### Модель для Comp Z_dif
 
 Исключим так же `Verbal Memory`, `Digit Sequencing`, `Token Motor Task`, `Verbal Fluency`, `Symbol Coding`, `Tower of London`.
@@ -491,11 +536,11 @@ lm(`Comp Z_dif` ~ ., data=selected_data) %>%
   step(trace=0) %>% 
   summary()
 ```
-Модель объясняет примерно 23.22% дисперсии (Multiple R-squared:  0.2322,	Adjusted R-squared:  0.1695).
+Модель объясняет примерно 26 % дисперсии (Multiple R-squared:  0.264,	Adjusted R-squared:  0.1873).
 
-### 5-факторная модель PANSS
+### 5-факторная модель PANSS для Comp Z_dif
 
-Теперь используем 5-факторную модель PANSS.
+Теперь используем 5-факторную модель PANSS 
 ```{r}
 selected_data <- difference_df %>% 
   select(-id, -starts_with(c("N", "P", "G", "Z")), negative_dif, positive_dif, CPZE) %>% 
@@ -531,106 +576,160 @@ lm(`Comp Z_dif` ~ `shoulder shaking_dif` + `elbow rigidity_dif` + `wrist rigidit
 ### Другая модель (ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif, ZToL_dif, ZMT_dif)
 
 Исключим так же `Comp Z_dif`, но добавим ZVM_dif, ZSC_dif, ZVF_dif, ZDS_dif, ZToL_dif, ZMT_dif.
+Будем строить модели для предсказания отдельных показателей когнитивных функций по разнице между визитами.
 
-1. Предсказываем ZVM_dif. Используем функцию step().
+Создаем датафреймы.
 
 ```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZVM_dif
+selected_data_ZVM_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZVM_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% 
-  summary()
-```
-
-Multiple R-squared:  0.09264,	Adjusted R-squared:  0.05706
-
-2. Предсказываем ZSC_dif. Используем функцию step().
-
-```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZSC_dif
+selected_data_ZSC_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZSC_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZSC_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZSC_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% 
-  summary()
-```
-
-Multiple R-squared:  0.1565,	Adjusted R-squared:  0.1234 
-
-3. Предсказываем ZVF_dif. Используем функцию step().
-
-```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZVF_dif
+selected_data_ZVF_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVF_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVF_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZVF_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% 
-  summary()
-```
-
-Multiple R-squared:  0.2015,	Adjusted R-squared:  0.1536 
-
-4. Предсказываем ZDS_dif. Используем функцию step().
-
-```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZDS_dif
+selected_data_ZDS_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZDS_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZDS_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZDS_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% summary()
-```
-
-Multiple R-squared:  0.1164,	Adjusted R-squared:  0.08172 
-
-5. Предсказываем ZToL_dif. Используем функцию step().
-
-```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZToL_dif
+selected_data_ZToL_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZToL_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZToL_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZToL_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% summary()
-```
-Multiple R-squared:  0.2223,	Adjusted R-squared:  0.1588
-
-6. Предсказываем ZMT_dif. Используем функцию step().
-
-```{r}
-selected_data <- difference_df %>% 
+# Для предсказания ZMT_dif
+selected_data_ZMT_dif <- difference_df %>% 
   select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
-         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZMT_dif) %>% 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZMT_dif, gait_dif, `glabella tap_dif`) %>% 
   select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
          -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`) %>% 
   select(-`Comp Z_dif`)
 
-lm(ZMT_dif ~ ., data=selected_data) %>% 
-  step(trace=0) %>% summary()
+# Для предсказания Comp Z_dif
+selected_data_Comp_Z_dif <- difference_df %>% 
+  select(-id, -excitment_dif, -cognitive_dif, -depression_dif , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), gait_dif, `glabella tap_dif`) %>% 
+  select(-`Verbal Memory_dif`, -`Digit Sequencing_dif`, 
+         -`Token Motor Task_dif`, -`Verbal Fluency_dif`, -`Symbol Coding_dif`, -`Tower of London_dif`)
+
 ```
 
-Multiple R-squared:  0.4085,	Adjusted R-squared:  0.2536 
+Проверим, правильно ли выбрали
 
-### Модели по отдельным визитам
+```{r}
+# Сравнение числа колонок
+num_cols_ZVM_dif <- ncol(selected_data_ZVM_dif)
+num_cols_ZSC_dif <- ncol(selected_data_ZSC_dif)
+num_cols_ZVF_dif <- ncol(selected_data_ZVF_dif)
+num_cols_ZDS_dif <- ncol(selected_data_ZDS_dif)
+num_cols_ZToL_dif <- ncol(selected_data_ZToL_dif)
+num_cols_ZMT_dif <- ncol(selected_data_ZMT_dif)
+num_cols_Comp_Z_dif <- ncol(selected_data_Comp_Z_dif)
+
+# Печать результатов
+cat("Число колонок в selected_data_ZVM_dif:", num_cols_ZVM_dif, "\n")
+cat("Число колонок в selected_data_ZSC_dif:", num_cols_ZSC_dif, "\n")
+cat("Число колонок в selected_data_ZVF_dif:", num_cols_ZVF_dif, "\n")
+cat("Число колонок в selected_data_ZDS_dif:", num_cols_ZDS_dif, "\n")
+cat("Число колонок в selected_data_ZToL_dif:", num_cols_ZToL_dif, "\n")
+cat("Число колонок в selected_data_ZMT_dif:", num_cols_ZMT_dif, "\n")
+cat("Число колонок в selected_data_Comp_Z_dif:", num_cols_Comp_Z_dif, "\n")
+```
+Построение моделей.
+```{r}
+fit_ZVM_dif <- lm(ZVM_dif ~ ., data=selected_data_ZVM_dif) %>% 
+  step(trace=0)
+fit_ZSC_dif <- lm(ZSC_dif ~ ., data=selected_data_ZSC_dif) %>% 
+  step(trace=0) 
+fit_ZVF_dif <- lm(ZVF_dif ~ ., data=selected_data_ZVF_dif) %>% 
+  step(trace=0)
+fit_ZDS_dif <- lm(ZDS_dif ~ ., data=selected_data_ZDS_dif) %>% 
+  step(trace=0)
+fit_ZTOL_dif <- lm(ZToL_dif ~ ., data=selected_data_ZToL_dif) %>% 
+  step(trace=0)
+fit_ZMT_dif <- lm(ZMT_dif ~ ., data=selected_data_ZMT_dif) %>% 
+  step(trace=0)
+
+
+#fit_ZVM_dif %>% summary()
+#fit_ZSC_dif %>% summary()
+#fit_ZVF_dif %>% summary()
+#fit_ZDS_dif %>% summary()
+#fit_ZTOL_dif %>% summary()
+#fit_ZMT_dif %>% summary()
+```
+
+Посмотрим что получилось
+```{r}
+# Функция для измлечения p-value модели
+overall_p <- function(my_model) {
+    f <- summary(my_model)$fstatistic
+    p <- pf(f[1],f[2],f[3],lower.tail=F)
+    attributes(p) <- NULL
+    return(p)
+}
+
+# Создание списка моделей с явными именами
+model_list <- list(
+  ZVM = fit_ZVM_dif,
+  ZSC = fit_ZSC_dif,
+  ZVF = fit_ZVF_dif,
+  ZDS = fit_ZDS_dif,
+  ZTOL = fit_ZTOL_dif,
+  ZMT = fit_ZMT_dif
+)
+
+# Извлечение статистики из каждой модели
+model_stats <- lapply(model_list, function(model) {
+  r_squared <- summary(model)$r.squared
+  adj_r_squared <- summary(model)$adj.r.squared
+  f_statistic <- summary(model)$fstatistic
+  p_value <- overall_p(model)
+  
+  data.frame(
+    R_squared = r_squared,
+    Adj_R_squared = adj_r_squared,
+    F_statistic = f_statistic[1],
+    p_value = p_value
+  )
+})
+
+# Объединение результатов в один датафрейм
+model_summary_table <- do.call(rbind, model_stats)
+
+# Вывод сводной таблицы
+model_summary_table %>% 
+  arrange(-Adj_R_squared, p_value)
+```
+ZMT, ZTOL, ZSC, ZVF - хорошо, 
+
+ZDS, ZVM - плохо
+
+### Модели Comp_Z по отдельным визитам
 
 visit = 1
 
@@ -646,7 +745,7 @@ selected_data <- data_filtered %>%
 lm(`Comp Z` ~ ., data=selected_data) %>% 
   step(trace=0) %>% summary()
 ```
-Multiple R-squared:  0.8786,	Adjusted R-squared:  0.1958
+Multiple R-squared:  0.9161,	Adjusted R-squared:  0.5554
 
 visit = 2
 
@@ -662,7 +761,7 @@ selected_data <- data_filtered %>%
 lm(`Comp Z` ~ ., data=selected_data) %>% 
   step(trace=0) %>% summary()
 ```
-Multiple R-squared:  0.9109,	Adjusted R-squared:  0.6367
+Multiple R-squared:  0.9299,	Adjusted R-squared:  0.4692 
 
 ### Разбиваем на группы по ответу на терапию
 
@@ -735,43 +834,415 @@ selected_data <- divide_by_treat_resp %>%
   select(-`Verbal Memory`, -`Digit Sequencing`, 
          -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`)
   
-lm(`Comp Z` ~ ., data=selected_data) %>% 
+sum <- lm(`Comp Z` ~ ., data=selected_data) %>% 
   step(trace=0) %>% summary()
 ```
+
 Multiple R-squared:  0.9186,	Adjusted R-squared:  0.608 
 
 
-lm с помощью Shiny можно запустить.
+### lm с помощью Shiny можно запустить.
 
 Для обоих визитов:
 
-
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
-lm_shiny(data_filtered %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
+lm_shiny(data_filtered %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
 ```
 
-Для первого визита:
-
-```{r eval=FALSE}
-path <- here("scripts/1_eda", "lm_shiny.R")
-source(path)
-lm_shiny(data_filtered %>% filter(visit==1) %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
-```
-
-Для второго визита:
-
-```{r eval=FALSE}
-path <- here("scripts/1_eda", "lm_shiny.R")
-source(path)
-lm_shiny(data_filtered %>% filter(visit==2) %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
-```
 
 Для разницы между визитами:
 
 ```{r eval=FALSE}
 path <- here("scripts/1_eda", "lm_shiny.R")
 source(path)
-lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}")))
+lm_shiny(difference_df %>% select(!matches("P\\d{1}") & !matches("N\\d{1}") & !matches("G\\d{1}") & !id))
 ```
+
+### Смешанные модели
+
+Испульзуя корреляционный анализ, решили строить смешанные модели, для предсказания когнитивных функций 
+
+- ZVM
+
+- ZMT
+
+- ZVF
+
+- ZToL
+
+- Comp Z
+
+
+Создадим датафреймы:
+
+
+```{r}
+# Создание датафреймов (если они еще не созданы)
+selected_data_ZVM <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression , 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVM, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+selected_data_ZMT <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZMT, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+selected_data_ZVF <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZVF, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+selected_data_ZToL <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), ZToL, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`) %>% 
+  select(-`Comp Z`)
+
+selected_data_Comp_Z <- data_filtered %>% 
+  select(-excitment, -cognitive, -depression, 
+         -starts_with('N'), -starts_with('P'), -starts_with('G'), -starts_with('Z'), `Comp Z`, gender, gait, `glabella tap`) %>% 
+  select(-`Verbal Memory`, -`Digit Sequencing`, 
+         -`Token Motor Task`, -`Verbal Fluency`, -`Symbol Coding`, -`Tower of London`)
+
+# Сравнение числа колонок
+num_cols_ZVM <- ncol(selected_data_ZVM)
+num_cols_ZMT <- ncol(selected_data_ZMT)
+num_cols_ZVF <- ncol(selected_data_ZVF)
+num_cols_ZToL <- ncol(selected_data_ZToL)
+num_cols_Comp_Z <- ncol(selected_data_Comp_Z)
+
+# Печать результатов
+cat("Число колонок в selected_data_ZVM:", num_cols_ZVM, "\n")
+cat("Число колонок в selected_data_ZMT:", num_cols_ZMT, "\n")
+cat("Число колонок в selected_data_ZVF:", num_cols_ZVF, "\n")
+cat("Число колонок в selected_data_ZToL:", num_cols_ZToL, "\n")
+cat("Число колонок в selected_data_Comp_Z:", num_cols_Comp_Z, "\n")
+
+```
+#### Первая попытка.
+
+Смешанная модель, в качестве случайного эффекта выбран id пациента.
+Используем lmer из пакета lmerTest, чтобы оценить p-value.
+
+```{r}
+lm(ZVM ~ `Total score SAS`, data = selected_data_ZVM %>% 
+  filter(visit==1)) %>% 
+  summary()
+```
+
+
+```{r}
+mixed_model <- lmer(ZVM ~ `Total score SAS` + (1 | id), data = selected_data_ZVM, REML=F)
+summary(mixed_model)
+```
+
+#### Для оценки фиксированного и случайного эффекта можно использовать:
+
+```{r}
+#fixef(mixed_model)
+#ranef(mixed_model)
+```
+
+
+Теперь построим и сравним модели
+```{r}
+# Создание смешанных линейных моделей для различных зависимых переменных
+mixed_model_ZVM <- lmer(ZVM ~ `Total score SAS` + (1 | id), data = selected_data_ZVM, REML = FALSE)
+mixed_model_ZMT <- lmer(ZMT ~ `Total score SAS` + (1 | id), data = selected_data_ZMT, REML = FALSE)
+mixed_model_ZVF <- lmer(ZVF ~ `Total score SAS` + (1 | id), data = selected_data_ZVF, REML = FALSE)
+mixed_model_ZToL <- lmer(ZToL ~ `Total score SAS` + (1 | id), data = selected_data_ZToL, REML = FALSE)
+mixed_model_Comp_Z <- lmer(`Comp Z` ~ `Total score SAS` + (1 | id), data = selected_data_Comp_Z, REML = FALSE)
+
+# Создание списка моделей
+model_list <- list(
+  mixed_model_ZVM = mixed_model_ZVM,
+  mixed_model_ZMT = mixed_model_ZMT,
+  mixed_model_ZVF = mixed_model_ZVF,
+  mixed_model_ZToL = mixed_model_ZToL,
+  mixed_model_Comp_Z = mixed_model_Comp_Z
+)
+
+# Извлечение информации о критериях для каждой модели
+model_summary <- lapply(names(model_list), function(model_name) {
+  model <- model_list[[model_name]]
+  data.frame(
+    Model = model_name,
+    AIC = AIC(model),
+    BIC = BIC(model),
+    logLik = logLik(model),
+    deviance = deviance(model),
+    df.resid = df.residual(model)
+  )
+})
+
+# Создание сводного датафрейма
+summary_dataframe <- do.call(rbind, model_summary)
+
+# Вывод сводного датафрейма
+summary_dataframe %>% 
+  arrange(AIC)
+```
+Самые лучшая модель по mixed_model_ZVF.
+
+#### Следующий этап. Модели оценки когнитивных функций.
+
+В смешанных моделях в качестве случайного эффекта выбран id пациента.
+Используем lmer из пакета lmerTest, чтобы оценить p-value.
+
+
+Строим модели:
+
+1.1.1 ZVM ~ `Total score PANSS` + `THF dose`
+
+1.1.2 ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`
+
+1.2.1 ZMT ~ `Total score PANSS` + `THF dose`
+
+1.2.2 ZMT ~ akathisia + `Total score PANSS` + `THF dose`
+
+1.3. ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`
+
+1.4.1 ZVF ~ tremor + `Total score PANSS` + `THF dose`
+
+1.4.2 ZVF ~ `Total score PANSS` + `THF dose`
+
+1.5 ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`
+
+```{r}
+model_1_1_1 <- lm(ZVM ~ `Total score PANSS` + `THF dose`, data = selected_data_ZVM)
+model_1_1_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM)
+
+model_1_2_1 <- lm(ZMT ~ `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
+model_1_2_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
+
+model_1_3 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT)
+
+model_1_4_1 <- lm(ZVF ~ `Total score PANSS` + `THF dose`, data = selected_data_ZVF)
+
+model_1_4_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF)
+
+model_1_5 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL) 
+```
+
+Попарно сравниваем и берем p-value
+
+- model_1_1_1 и model_1_1_2
+
+- model_1_2_1 и model_1_2_2
+
+- model_1_4_1 и model_1_4_2
+
+Для моделей model_1_3 и model_1_5 берем p-value для `Total score SAS`
+Применим поправку Бенджамина Хохберга.
+
+```{r}
+# Сравнение моделей с использованием anova
+anova_result_1 <- anova(model_1_1_1, model_1_1_2)
+anova_result_2 <- anova(model_1_2_1, model_1_2_2)
+summary_3 <- model_1_3 %>% summary()
+anova_result_4 <- anova(model_1_4_1, model_1_4_2)
+summary_5 <-model_1_5 %>% summary()
+# Получение p-значения из второго элемента массива Pr(>F) для каждого сравнения
+p_value_1 <- anova_result_1$`Pr(>F)`[2]
+p_value_2 <- anova_result_2$`Pr(>F)`[2]
+p_value_3 <- summary_3$coefficients[14]
+p_value_4 <- anova_result_4$`Pr(>F)`[2]
+p_value_5 <- summary_5$coefficients[14]
+
+# Создание tibble с p-значениями
+tibble(
+  Model = c("ZVM", "ZMT_1", "ZMT_2", "ZVF", "ZToL"),
+  P_Value = round(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), 3), 
+  P_Adjusted = round(p.adjust(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), method = "BH"), 3)
+)
+```
+
+Красиво выводим модели
+
+```{r}
+# Загрузка необходимых библиотек
+library(dplyr)
+library(knitr)
+
+# Создание функции для получения summary и преобразования в таблицу
+get_lm_summary_table <- function(model, dependent_variable) {
+  summary_data <- summary(model)
+  
+  # Извлечение интересующих вас данных из summary
+  coefficients <- summary_data$coefficients[, c("Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+  
+  # Создание таблицы
+  table_data <- as.data.frame(coefficients)
+  table_data$Variable <- rownames(coefficients)
+  rownames(table_data) <- NULL
+  
+  # Округление до 3 знаков после запятой
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
+  # Добавление имени зависимой переменной
+  table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
+  
+  return(table_data)
+}
+
+# Получение таблиц для каждой модели
+table_ZVM_1 <- get_lm_summary_table(model_1_1_1, "ZVM_1")
+table_ZVM_2 <- get_lm_summary_table(model_1_1_2, "ZVM_2")
+
+table_ZMT_1_1 <- get_lm_summary_table(model_1_2_1, "ZMT_1_1")
+table_ZMT_1_2 <- get_lm_summary_table(model_1_2_2, "ZMT_1_2")
+
+table_ZMT_2 <- get_lm_summary_table(model_1_3, "ZMT_2")
+
+table_ZVF_1 <- get_lm_summary_table(model_1_4_1, "ZVF_1")
+table_ZVF_2 <- get_lm_summary_table(model_1_4_2, "ZVF_2")
+
+table_ZToL <- get_lm_summary_table(model_1_5, "ZToL")
+
+# Объединение таблиц в одну
+final_table <- rbind(table_ZVM_1, table_ZVM_2, table_ZMT_1_1, table_ZMT_1_2, table_ZMT_2, table_ZVF_1, table_ZVF_2, table_ZToL)
+
+# Вывод таблицы
+kable(final_table, format = "html")
+
+
+```
+
+Разбиваем по визитам
+
+```{r}
+model_ZVM_visit_1 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM %>% filter(visit==1))
+model_ZVM_visit_2 <- lm(ZVM ~ `head rotation` + `Total score PANSS` + `THF dose`, data = selected_data_ZVM %>% filter(visit==2))
+
+model_ZMT_1_visit_1 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==1))
+model_ZMT_1_visit_2 <- lm(ZMT ~ akathisia + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==2))
+
+model_ZMT_2_visit_1 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==1)) 
+model_ZMT_2_visit_2 <- lm(ZMT ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZMT %>% filter(visit==2)) 
+
+model_ZVF_visit_1 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF %>% filter(visit==1))
+model_ZVF_visit_2 <- lm(ZVF ~ tremor + `Total score PANSS` + `THF dose`, data = selected_data_ZVF %>% filter(visit==2))
+
+model_ZToL_visit_1 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL %>% filter(visit==1)) 
+model_ZToL_visit_2 <- lm(ZToL ~ `Total score SAS` + `Total score PANSS` + `THF dose`, data = selected_data_ZToL %>% filter(visit==1))
+
+# Создание функции для получения summary и преобразования в таблицу
+get_lm_summary_table <- function(model, dependent_variable) {
+  summary_data <- summary(model)
+  
+  # Извлечение интересующих вас данных из summary
+  coefficients <- summary_data$coefficients[, c("Estimate", "Std. Error", "t value", "Pr(>|t|)")]
+  
+  # Создание таблицы
+  table_data <- as.data.frame(coefficients)
+  table_data$Variable <- rownames(coefficients)
+  rownames(table_data) <- NULL
+  
+  # Округление до 3 знаков после запятой
+  table_data$Estimate <- round(table_data$Estimate, 3)
+  table_data$`Std. Error` <- round(table_data$`Std. Error`, 3)
+  table_data$`t value` <- round(table_data$`t value`, 3)
+  table_data$`Pr(>|t|)` <- round(table_data$`Pr(>|t|)`, 3)
+  
+  # Добавление имени зависимой переменной
+  table_data <- cbind(Dependent_Variable = dependent_variable, table_data)
+  
+  return(table_data)
+}
+
+# Получение таблиц для каждой модели
+table_ZVM_visit_1 <- get_lm_summary_table(model_ZVM_visit_1, "ZVM_visit_1")
+table_ZVM_visit_2 <- get_lm_summary_table(model_ZVM_visit_2, "ZVM_visit_2")
+
+table_ZMT_1_visit_1 <- get_lm_summary_table(model_ZMT_1_visit_1, "ZMT_1_visit_1")
+table_ZMT_1_visit_2 <- get_lm_summary_table(model_ZMT_1_visit_2, "ZMT_1_visit_2")
+
+table_ZMT_2_visit_1 <- get_lm_summary_table(model_ZMT_2_visit_1, "ZMT_2_visit_1")
+table_ZMT_2_visit_2 <- get_lm_summary_table(model_ZMT_2_visit_2, "ZMT_2_visit_2")
+
+table_ZVF_visit_1 <- get_lm_summary_table(model_ZVF_visit_1, "ZVF_visit_1")
+table_ZVF_visit_2 <- get_lm_summary_table(model_ZVF_visit_2, "ZVF_visit_2")
+
+table_ZToL_visit_1 <- get_lm_summary_table(model_ZToL_visit_1, "ZToL_visit_1")
+table_ZToL_visit_2 <- get_lm_summary_table(model_ZToL_visit_2, "ZToL_visit_2")
+
+# Объединение таблиц в одну
+final_table <- rbind(table_ZVM_visit_1, table_ZVM_visit_2, table_ZMT_1_visit_1, table_ZMT_1_visit_2, 
+                     table_ZMT_2_visit_1, table_ZMT_2_visit_2, table_ZVF_visit_1, table_ZVF_visit_2,
+                     table_ZToL_visit_1, table_ZToL_visit_2)
+
+# Вывод таблицы
+kable(final_table, format = "html")
+
+```
+
+
+
+
+#### Модели ЭПС логистическая регрессия
+
+
+```{r}
+data_for_logr <- data_filtered %>% 
+  mutate(
+    head_rotation_bin = ifelse(`head rotation` < 2, 0, 1),
+    tremor_bin = ifelse(tremor < 2, 0, 1),
+    akathisia_bin = ifelse(akathisia < 2, 0, 1),
+    )
+
+
+glm(head_rotation_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+glm(tremor_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+glm(akathisia_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr) %>% summary()
+lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered) %>% summary()
+```
+
+То же самое в виде таблицы
+
+```{r}
+library(broom)
+
+model_head <- glm(head_rotation_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_head <- tidy(model_head)
+model_tremor <- glm(tremor_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_tremor <- tidy(model_tremor)
+model_akathisia <- glm(akathisia_bin ~ CPZE + `Total score PANSS`, family = binomial, data = data_for_logr)
+summary_akathisia <- tidy(model_akathisia)
+model_total_score <- lm(`Total score SAS` ~ CPZE + `Total score PANSS`, data = data_filtered)
+summary_total_score <- tidy(model_total_score)
+
+# Округляем коэффициенты до 3 знаков после запятой
+round_summary <- function(summary) {
+  summary$estimate <- round(summary$estimate, 3)
+  summary$std.error <- round(summary$std.error, 3)
+  summary$statistic <- round(summary$statistic, 3)
+  summary$p.value <- round(summary$p.value, 3)
+  return(summary)
+}
+
+# Объединяем и округляем результаты в одну таблицу
+result_table <- bind_rows(
+  mutate(round_summary(summary_head), Outcome = "Head Rotation"),
+  mutate(round_summary(summary_tremor), Outcome = "Tremor"),
+  mutate(round_summary(summary_akathisia), Outcome = "Akathisia"),
+  mutate(round_summary(summary_total_score), Outcome = "Total Score SAS")
+)
+
+# Выводим результаты
+print(result_table)
+
+```
+
