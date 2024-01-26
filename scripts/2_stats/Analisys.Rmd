@@ -14,20 +14,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-# List of libraries to install if not already installed
-libraries_to_install <- c(
-  "tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", 
-  "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet", 
-  "dagitty", "ggdag", "reshape2", "reshape"
-)
-
-# Check and install libraries
-for (library_name in libraries_to_install) {
-  if (!requireNamespace(library_name, quietly = TRUE)) {
-    install.packages(library_name, dependencies = TRUE)
-  }
-}
-
 library(tidyverse)
 library(ggplot2)
 library(writexl)
@@ -45,7 +31,6 @@ library(dagitty)
 library(ggdag)
 library(reshape2)
 library(reshape)
-
 ```
 
 # 1. EDA
@@ -196,7 +181,7 @@ coords <- list(
         AMAN = 5,
         DEP = 4,
         NSYM = 4,
-        INMT = -2)
+        INMT = -3)
 )
 
 # Создание DAG
@@ -210,23 +195,23 @@ dag <- ggdag::dagify(
 )
 
 # Визуализация DAG с ggplot2
-ggdag(dag, text_size = 4) +
-  theme_dag()
+ggdag_adjustment_set(dag, shadow = T) +
+    theme_dag()
 ```
+
 # 3. Dynamics
 
  Creating a dataframe containing the difference in quantitative indicators between visits.
  Using make_difference_df.R
 
-```{r}
+```{r warning=FALSE}
 path <- here("scripts/0_preprocessing", "make_difference_df.R")
 source(path)
 difference_df <- make_dif_df(data_filtered)
-difference_df
 ```
 
 ## 3.1 Difference between visits
-```{r}
+```{r warning=FALSE}
 difference_df %>%
   gather(variable, value, -id) %>%
   filter(!grepl("G[1-9]|N[1-7]|P[1-7]_dif$", variable)) %>%
@@ -261,7 +246,7 @@ difference_df %>%
 
 ## 3.2 Correlation analysis
 
-```{r}
+```{r warning=FALSE}
 text_data <- "
 ,gait_week_2,gait_week_8,arm_dropping_week_2,depression_week_8,shoulder_shaking_week_2,elbow_rigidity_week_2,elbow_rigidity_week_8,head_rotation_week_2,head_rotation_week_8,glabella_tap_week_2,tremor_week_2,tremor_week_8,salivation_week_2,salivation_week_8,akathisia_week_2,akathisia_week_8,Total_score_SAS_week_2,Total_score_SAS_week_8
 ZVM_week_2,,,-0.342,,,,,-0.297,-0.314,,,,,,,,,
@@ -465,7 +450,8 @@ tibble(
   Model = c("ZVM", "ZMT_1", "ZMT_2", "ZVF", "ZToL"),
   P_Value = round(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), 3), 
   P_Adjusted = round(p.adjust(c(p_value_1, p_value_2, p_value_3, p_value_4, p_value_5), method = "BH"), 3)
-)
+) %>%  kable(format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 
 ```{r}
@@ -511,7 +497,8 @@ table_ZToL <- get_lm_summary_table(model_1_5, "ZToL")
 final_table <- rbind(table_ZVM_1, table_ZVM_2, table_ZMT_1_1, table_ZMT_1_2, table_ZMT_2, table_ZVF_1, table_ZVF_2, table_ZToL)
 
 # Displaying the table
-kable(final_table, format = "html")
+kable(final_table, format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 
 ```
 Divide by visits
@@ -578,7 +565,8 @@ final_table <- rbind(table_ZVM_visit_1, table_ZVM_visit_2, table_ZMT_1_visit_1, 
                      table_ZToL_visit_1, table_ZToL_visit_2)
 
 # Displaying the table
-kable(final_table, format = "html")
+kable(final_table, format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 ## 4.2 EPS models logistic regression
 
@@ -616,7 +604,8 @@ result_table <- bind_rows(
   mutate(round_summary(summary_total_score), Outcome = "Total Score SAS")
 )
 
-# Displaying the results
-print(result_table)
+# Displaying the table
+kable(result_table, format = "html") %>%
+  kable_styling("striped", full_width = FALSE)
 ```
 
