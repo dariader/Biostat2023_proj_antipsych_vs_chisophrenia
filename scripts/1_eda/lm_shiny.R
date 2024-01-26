@@ -10,6 +10,14 @@ library(broom)
 library(here)
 library(knitr)
 
+# Функция для извлечения p-value модели
+overall_p <- function(my_model) {
+  f <- summary(my_model)$fstatistic
+  p_value <- pf(f[1], f[2], f[3], lower.tail = FALSE)
+  attributes(p_value) <- NULL
+  return(p_value)
+}
+
 lm_shiny <- function(data_path) {
   
   data_filtered <- data_path
@@ -37,7 +45,9 @@ lm_shiny <- function(data_path) {
                  mainPanel(
                    tableOutput("regression_table"),
                    textOutput("r_squared_value"),
-                   textOutput("adj_r_squared_value")
+                   textOutput("adj_r_squared_value"),
+                   textOutput("f_statistic"),  
+                   textOutput("p_value_f_statistic")  
                  )
                )),
       tabPanel("Stepwise Regression",
@@ -56,7 +66,10 @@ lm_shiny <- function(data_path) {
                  mainPanel(
                    tableOutput("stepwise_table"),
                    textOutput("r_squared_value_stepwise"),
-                   textOutput("adj_r_squared_value_stepwise")
+                   textOutput("adj_r_squared_value_stepwise"),
+                   textOutput("f_statistic_stepwise"),  
+                   textOutput("p_value_f_statistic_stepwise")  
+                   
                  )
                ))
     )
@@ -108,6 +121,33 @@ lm_shiny <- function(data_path) {
       paste("Adjusted R-squared: ", round(adj_r_squared, 4))
     })
     
+    # Вывод F-статистики и p-value
+    output$f_statistic <- renderText({
+      regression_summary <- summary(regression_model())
+      
+      if ("fstatistic" %in% names(regression_summary)) {
+        f_statistic <- regression_summary$fstatistic
+        result <- paste("F-statistic: ", round(f_statistic[1], 4))
+      } else {
+        result <- " "
+      }
+      
+      return(result)
+    })
+    
+    output$p_value_f_statistic <- renderText({
+      regression_summary <- summary(regression_model())
+      
+      if ("fstatistic" %in% names(regression_summary)) {
+        p_value <- overall_p(regression_model())
+        result <- paste("p-value: ", format(p_value, digits = 4))
+      } else {
+        result <- " "
+      }
+      
+      return(result)
+    })
+    
     # Создание динамического UI для выбора предикторов
     output$predictor_selector <- renderUI({
       selectInput("predictors", "Предикторы:",
@@ -129,58 +169,79 @@ lm_shiny <- function(data_path) {
       selected_stepwise_predictors(input$step_predictors)
     })
     
+    # Создание динамического UI для выбора предикторов в step()
+    output$step_predictor_selector <- renderUI({
+      selectInput("step_predictors", "Предикторы:",
+                  choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                  selected = selected_stepwise_predictors(),
+                  multiple = TRUE)
+    })
+    
     # Обработка добавления всех факторов в step()
     observeEvent(input$add_all_button, {
       selected_stepwise_predictors(names(data_filtered))
+      updateSelectInput(session, "step_predictors",
+                        choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                        selected = setdiff(names(data_filtered), input$step_response_var))
     })
     
     # Обработка удаления всех факторов из step()
     observeEvent(input$remove_all_button, {
       selected_stepwise_predictors(character(0))
-    })
-    
-    # Создание динамического UI для выбора предикторов в step()
-    output$step_predictor_selector <- renderUI({
-      selectInput("step_predictors", "Предикторы:",
-                  choices = c("", names(data_filtered)),
-                  selected = selected_stepwise_predictors(),
-                  multiple = TRUE)
+      updateSelectInput(session, "step_predictors",
+                        choices = c("", setdiff(names(data_filtered), input$step_response_var)),
+                        selected = character(0))
     })
     
     # Обработка выполнения step()
     observeEvent(input$step_button, {
       selected_predictors <- selected_stepwise_predictors()
+      
+      # Проверка наличия выбранных факторов
+      if (length(selected_predictors) == 0) {
+        showModal(
+          modalDialog(
+            title = "Ошибка",
+            "Выберите хотя бы один предиктор",
+            easyClose = TRUE
+          )
+        )
+        return()
+      }
+      
       formula_str <- as.formula(paste(input$step_response_var, "~", paste(selected_predictors, collapse = " + ")))
       
-      # Проверка наличия переменных с одним уровнем
-      excluded_predictors <- character(0)
-      for (predictor in selected_predictors) {
-        if (length(unique(data_filtered[[predictor]])) <= 1) {
-          excluded_predictors <- c(excluded_predictors, predictor)
+      # Функция для определения оттенка зеленого в зависимости от уровня значимости
+      get_shade_of_green <- function(p_value) {
+        if (p_value < 0.001) {
+          return("#00FF00")  # Зеленый для уровня значимости < 0.001
+        } else if (p_value < 0.01) {
+          return("#66FF66")  # Светло-зеленый для уровня значимости < 0.01
+        } else if (p_value < 0.05) {
+          return("#99FF99")  # Средне-зеленый для уровня значимости < 0.05
+        } else {
+          return("#FFFFFF")  # Белый для всех остальных случаев
         }
       }
-      
-      # Исключение переменных с одним уровнем из выбранных
-      selected_predictors <- setdiff(selected_predictors, excluded_predictors)
-      
-      if (length(selected_predictors) == 0) {
-        # Если не осталось выбранных предикторов, выдаем сообщение
-        showModal(modalDialog(
-          title = "Ошибка",
-          "Все выбранные предикторы содержат только одно значение и не могут быть включены в модель.",
-          easyClose = TRUE
-        ))
-        return(NULL)
-      }
-      
-      formula_str <- as.formula(paste(input$step_response_var, "~", paste(selected_predictors, collapse = " + ")))
       
       step_model <- step(lm(formula_str, data = data_filtered))
       output$stepwise_table <- renderTable({
         tidy_table <- tidy(step_model)
+        
         kable(tidy_table, "html", align = "c", escape = FALSE) %>%
           kable_styling("striped", full_width = FALSE) %>%
-          row_spec(which(tidy_table$p.value < 0.05), background = "#99FF99")  # Задайте цвет для значимых строк
+          row_spec(
+            which(tidy_table$p.value < 0.001),
+            background = "#00FF00"
+          ) %>%
+          row_spec(
+            which(tidy_table$p.value >= 0.001 & tidy_table$p.value < 0.01),
+            background = "#66FF66"
+          ) %>%
+          row_spec(
+            which(tidy_table$p.value >= 0.01 & tidy_table$p.value < 0.05),
+            background = "#99FF99"
+          )
       }, sanitize.text.function = function(x) x)
       
       # Вывод R-квадрата
@@ -195,26 +256,36 @@ lm_shiny <- function(data_path) {
         paste("Adjusted R-squared: ", round(adj_r_squared, 4))
       })
       
-      # Если были исключены переменные, сообщаем об этом пользователю
-      if (length(excluded_predictors) > 0) {
-        showModal(modalDialog(
-          title = "Исключенные предикторы",
-          paste("Следующие предикторы содержат только одно значение и были исключены из модели:", paste(excluded_predictors, collapse = ", ")),
-          easyClose = TRUE
-        ))
-      }
+      # Вывод F-статистики и p-value
+      output$f_statistic_stepwise <- renderText({
+        regression_summary <- summary(regression_model())
+        
+        if ("fstatistic" %in% names(regression_summary)) {
+          f_statistic <- regression_summary$fstatistic
+          result <- paste("F-statistic: ", round(f_statistic[1], 4))
+        } else {
+          result <- " "
+        }
+        
+        return(result)
+      })
+      
+      output$p_value_f_statistic_stepwise <- renderText({
+        regression_summary <- summary(regression_model())
+        
+        if ("fstatistic" %in% names(regression_summary)) {
+          p_value <- overall_p(regression_model())
+          result <- paste("p-value: ", format(p_value, digits = 4))
+        } else {
+          result <- " "
+        }
+        
+        return(result)
+      })
+      
     })
   }
   
   # Запуск Shiny-приложения
   shinyApp(ui = ui, server = server)
 }
-
-# Пример использования с фиктивными данными
-data_example <- data.frame(
-  Comp_1 = rnorm(100),
-  Comp_2 = rnorm(100),
-  Y = rnorm(100)
-)
-
-lm_shiny(data_example)

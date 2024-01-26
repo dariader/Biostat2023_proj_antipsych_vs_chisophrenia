@@ -166,6 +166,6 @@ preprocessing <- function(filename) {
   data[factor_columns_resulting] <- lapply(data[factor_columns_resulting], as.factor)
 
   # запись в файл
-  write.xlsx(data, file = output, sheetName="data_filtered", append=TRUE)
+#  write.xlsx(data, file = output, sheetName="data_filtered", append=TRUE)
   return(data)
 }
