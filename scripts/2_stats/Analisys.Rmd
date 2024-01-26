@@ -15,7 +15,11 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 # List of libraries to install if not already installed
-libraries_to_install <- c("tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet")
+libraries_to_install <- c(
+  "tidyverse", "ggplot2", "writexl", "openxlsx", "shiny", "kableExtra", 
+  "broom", "here", "TOC", "psych", "lme4", "lmerTest", "broom", "nnet", 
+  "dagitty", "ggdag", "reshape2", "reshape"
+)
 
 # Check and install libraries
 for (library_name in libraries_to_install) {
@@ -41,6 +45,7 @@ library(dagitty)
 library(ggdag)
 library(reshape2)
 library(reshape)
+
 ```
 
 # 1. EDA
